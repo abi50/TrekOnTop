@@ -99,7 +99,7 @@ namespace TrekOnTop.Controllers
                 return BadRequest("Invalid email format.");
             }
 
-            
+
 
             var existingUser = service.GetAll().FirstOrDefault(x => x.Email == newUser.Email);
             if (existingUser != null)
@@ -113,6 +113,7 @@ namespace TrekOnTop.Controllers
             service.AddItem(newUser);
             return Ok("User registered successfully.");
         }
+
         private bool IsValidEmail(string email)
         {
             return new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email);
