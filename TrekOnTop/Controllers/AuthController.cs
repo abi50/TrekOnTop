@@ -13,7 +13,7 @@ namespace TrekOnTop.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IService<UserDto> service; 
+        private readonly IService<UserDto> service;
         private readonly IConfiguration config;
         public AuthController(IService<UserDto> service, IConfiguration config)
         {
@@ -113,7 +113,6 @@ namespace TrekOnTop.Controllers
             service.AddItem(newUser);
             return Ok("User registered successfully.");
         }
-
         private bool IsValidEmail(string email)
         {
             return new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email);
