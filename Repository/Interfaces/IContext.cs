@@ -17,6 +17,8 @@ namespace Repository.Interfaces
         DbSet<Country> Countries { get; set; }
         DbSet<Place> Places { get; set; }
         DbSet<Image> Images { get; set; }
+        DbSet<RecommendationLike> RecommendationLikes { get; set; } 
+
 
         void save();
     }

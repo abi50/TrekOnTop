@@ -32,6 +32,8 @@ namespace Repository.Entity
 
         public int Likes { get; set; } = 0;
         public int Dislikes { get; set; } = 0;
+        public virtual ICollection<RecommendationLike> RecommendationLikes { get; set; }
+
     }
 
 

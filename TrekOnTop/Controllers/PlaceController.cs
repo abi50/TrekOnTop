@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
+using Services.Services;
 using System.Security.Claims;
 
 namespace TrekOnTop.Controllers
@@ -12,9 +13,12 @@ namespace TrekOnTop.Controllers
     {
         
             private readonly IService<PlaceDto> _placeService;
-            public PlaceController(IService<PlaceDto> placeService)
+            private readonly IService<CityDto> _cityService;
+
+        public PlaceController(IService<PlaceDto> placeService, IService<CityDto> cityService)
             {
                 _placeService = placeService;
+                _cityService = cityService;
             }
 
             // GET: api/<UserController>
@@ -54,10 +58,40 @@ namespace TrekOnTop.Controllers
 
         // DELETE api/<UserController>/5
         [HttpDelete("{id}")]
-            public void Delete(int id)
+         public void Delete(int id)
+         {
+             _placeService.Delete(id);
+         }
+
+        [HttpGet("byCountry/{countryId}")]
+        public IActionResult GetPlacesByCountry(int countryId)
+        {
+            // שלב 1: קבלת כל הערים במדינה
+            var citiesInCountry = _cityService.GetAll()
+                                              .Where(c => c.CountryId == countryId)
+                                              .Select(c => c.Id) // שליפת מזהי ערים
+                                              .ToList();
+
+            if (!citiesInCountry.Any())
             {
-                _placeService.Delete(id);
+                return NotFound($"No cities found in country with ID {countryId}.");
             }
+
+            // שלב 2: חיפוש כל המקומות שנמצאים באותן ערים
+            var places = _placeService.GetAll()
+                                      .Where(p => citiesInCountry.Contains(p.CityId))
+                                      .ToList();
+
+            if (!places.Any())
+            {
+                return NotFound($"No places found in country with ID {countryId}.");
+            }
+
+            return Ok(places);
         }
+
+
     }
+
+}
 

@@ -6,34 +6,67 @@ using System.Security.Claims;
 
 namespace TrekOnTop.Controllers
 {
-     // דורש JWT
     [Route("api/[controller]")]
     [ApiController]
-    public class UserController: ControllerBase
+    public class UserController : ControllerBase
     {
-        
-            private readonly IService<UserDto> _userService;
-            public UserController(IService<UserDto> userService)
-            {
-                _userService = userService;
-            }
+        private readonly IService<UserDto> _userService;
 
-            // GET: api/<UserController>
-            [HttpGet]
-            public List<UserDto> Get()
-            {
-                return _userService.GetAll();
-            }
+        public UserController(IService<UserDto> userService)
+        {
+            _userService = userService;
+        }
 
-        // GET api/<UserController>/5
+        [HttpGet]
+        public IActionResult Get()
+        {
+            return Ok(_userService.GetAll());
+        }
+
         [Authorize]
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
             var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            if (id != currentUserId) return Forbid();
+
+            var user = _userService.GetById(id);
+            return user != null ? Ok(user) : NotFound($"User with ID {id} not found.");
+        }
+
+        [HttpPost]
+        public IActionResult Post([FromForm] UserDto value)
+        {
+            _userService.AddItem(value);
+            return Ok("User added successfully");
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromForm] UserDto value)
+        {
+            _userService.Update(id, value);
+            return Ok("User updated successfully");
+        }
+
+        [Authorize]
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized("User ID is missing from the token.");
+            }
+
+            if (!int.TryParse(userIdClaim, out int currentUserId))
+            {
+                return BadRequest("Invalid User ID format.");
+            }
+
             if (id != currentUserId)
             {
-                return Forbid(); // מונע ממשתמשים לצפות בפרופיל של מישהו אחר
+                return Forbid(); // מונע ממשתמשים למחוק משתמש אחר
             }
 
             var user = _userService.GetById(id);
@@ -41,58 +74,21 @@ namespace TrekOnTop.Controllers
             {
                 return NotFound($"User with ID {id} not found.");
             }
-            return Ok(user);
+
+            _userService.Delete(id);
+            return Ok("User deleted successfully.");
         }
 
 
-        // POST api/<UserController>
-        [HttpPost]
-            public void Post([FromForm] UserDto value)
-            {
-                _userService.AddItem(value);
-            }
-
-            // PUT api/<UserController>/5
-            [HttpPut("{id}")]
-            public void Put(int id, [FromForm] UserDto value)
-            {
-            _userService.Update(id, value);
-            }
-
-        // DELETE api/<UserController>/5
-        [Authorize]
-        [HttpDelete("{id}")]
-            public IActionResult Delete(int id)
-            {
-                 var currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                 if (id != currentUserId)
-                 {
-                     return Forbid(); // מונע ממשתמשים לצפות בפרופיל של מישהו אחר
-                 }
-
-                 var user = _userService.GetById(id);
-                 if (user == null)
-                 {
-                     return NotFound($"User with ID {id} not found.");
-                 }
-                 _userService.Delete(id);
-                  return Ok(user);
-            }
         [Authorize]
         [HttpGet("getimage/{id}")]
-            public IActionResult GetImage(int id)
-            {
-                var user = _userService.GetById(id);
-                if (user == null)
-                {
-                    return NotFound($"User with ID {id} not found.");
-                }
-                if (user.ProfilPic == null || user.ProfilPic.Length == 0)
-                {
-                    return NotFound("Profile picture not found.");
-                }
-                return File(user.ProfilPic, "image/jpg");
-            }
+        public IActionResult GetImage(int id)
+        {
+            var user = _userService.GetById(id);
+            if (user?.ProfilPic == null || user.ProfilPic.Length == 0)
+                return NotFound("Profile picture not found.");
 
+            return File(user.ProfilPic, "image/jpg");
+        }
     }
 }

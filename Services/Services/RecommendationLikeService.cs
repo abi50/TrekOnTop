@@ -2,13 +2,14 @@
 using Common.Dtos;
 using Repository.Entity;
 using Repository.Interfaces;
+using Services.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Services.Services
 {
-    public class RecommendationLikeService
+    public class RecommendationLikeService : IService<RecommendationDto>
     {
         private readonly IRepository<RecommendationLike> _likeRepository;
         private readonly IRepository<Recommendation> _recommendationRepository;
@@ -24,6 +25,38 @@ namespace Services.Services
             _mapper = mapper;
         }
 
+        public List<RecommendationDto> GetAll()
+        {
+            return _recommendationRepository.GetAll()
+                .Select(reco => _mapper.Map<RecommendationDto>(reco))
+                .ToList();
+        }
+
+        public RecommendationDto GetById(int id)
+        {
+            return _mapper.Map<RecommendationDto>(_recommendationRepository.Get(id));
+        }
+
+        public RecommendationDto AddItem(RecommendationDto item)
+        {
+            return _mapper.Map<RecommendationDto>(
+                _recommendationRepository.AddItem(_mapper.Map<Recommendation>(item))
+            );
+        }
+
+        public void Delete(int id)
+        {
+            _recommendationRepository.DeleteItem(id);
+        }
+
+        public RecommendationDto Update(int id, RecommendationDto item)
+        {
+            return _mapper.Map<RecommendationDto>(
+                _recommendationRepository.UpdateItem(id, _mapper.Map<Recommendation>(item))
+            );
+        }
+
+        // ✅ פונקציה לטיפול בלייקים
         public async Task<RecommendationDto> ToggleLikeAsync(int userId, int recoId)
         {
             var recommendation = _recommendationRepository.Get(recoId);
@@ -63,6 +96,7 @@ namespace Services.Services
             return _mapper.Map<RecommendationDto>(recommendation);
         }
 
+        // ✅ פונקציה לטיפול בדיסלייקים
         public async Task<RecommendationDto> ToggleDislikeAsync(int userId, int recoId)
         {
             var recommendation = _recommendationRepository.Get(recoId);

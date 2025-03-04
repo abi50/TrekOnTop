@@ -16,8 +16,8 @@ namespace Services.Services
 
             // Map בין User ל-UserDto
             CreateMap<User, UserDto>()
-                .ForMember(dest => dest.ProfilPic, src => src
-                .MapFrom(s => ConvertToByte(Environment.CurrentDirectory + "/images/" + s.ProfilPic)));
+                 .ForMember(dest => dest.ProfilPic, src => src
+                 .MapFrom(s => ConvertToByte(Path.Combine(Environment.CurrentDirectory, "images", s.ProfilPic))));
 
             CreateMap<UserDto, User>()
                 .ForMember(dest => dest.ProfilPic, src => src
@@ -42,15 +42,24 @@ namespace Services.Services
             CreateMap<Country, CountryDto>().ReverseMap();
             CreateMap<Place, PlaceDto>().ReverseMap().ReverseMap();
             CreateMap<Image, ImageDto>().ReverseMap().ReverseMap();
+            CreateMap<RecommendationLike, RecommendationLikeDto>().ReverseMap();
 
 
         }
 
         public byte[] ConvertToByte(string image)
         {
-            var res = System.IO.File.ReadAllBytes(image);
-            return res;
+            if (!File.Exists(image))
+            {
+                Console.WriteLine($"⚠ הקובץ לא נמצא: {image}. מחזיר תמונת ברירת מחדל.");
+                return File.Exists(Environment.CurrentDirectory + "/images/default.jpg")
+                    ? File.ReadAllBytes(Environment.CurrentDirectory + "/images/default.jpg")
+                    : new byte[0]; // אם גם התמונה ברירת מחדל חסרה, מחזיר מערך ריק
+            }
+
+            return File.ReadAllBytes(image);
         }
+
 
     }
 }

@@ -18,6 +18,7 @@ namespace Mock
         public DbSet<Country> Countries { get; set; }
         public DbSet<Place> Places { get; set; }
         public DbSet<Image> Images { get; set; }
+        public DbSet<RecommendationLike> RecommendationLikes { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer("server=LAPTOP-8RM4IF3S\\SQLEXPRESS;database=trek_on_top;trusted_connection=true;");
