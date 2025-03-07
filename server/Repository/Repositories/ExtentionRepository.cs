@@ -17,6 +17,7 @@ namespace Repository.Repositories
             services.AddScoped<IRepository<Category>, CategoryRepository>();
             services.AddScoped<IRepository<City>, CityRepository>();
             services.AddScoped<IRepository<Recommendation>, RecommendationRepository>();
+            services.AddScoped<IRepository<RecommendationLike>, RecommendationLikeRepository>();
             services.AddScoped<IRepository<Country>, CountryRepository>();
             services.AddScoped<IRepository<Place>,PlaceRepository>();
             services.AddScoped<IRepository<Image>,ImageRepository>();

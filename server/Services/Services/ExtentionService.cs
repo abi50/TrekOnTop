@@ -1,5 +1,7 @@
 ﻿using Common.Dtos;
 using Microsoft.Extensions.DependencyInjection;
+using Repository.Entity;
+using Repository.Interfaces;
 using Repository.Repositories;
 using Services.Interfaces;
 using System;
@@ -22,8 +24,8 @@ namespace Services.Services
                 services.AddScoped<IService<CountryDto>, CountryService>();
                 services.AddScoped<IService<PlaceDto>, PlaceService>();
                 services.AddScoped<IService<ImageDto>, ImageService>();
-
-            services.AddAutoMapper(typeof(MyMapper));
+                services.AddScoped<RecommendationLikeService>();
+                services.AddAutoMapper(typeof(MyMapper));
                 return services;
          }
     }

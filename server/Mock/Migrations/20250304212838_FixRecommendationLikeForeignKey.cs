@@ -4,7 +4,7 @@
 
 namespace Mock.Migrations
 {
-    public partial class AddRecommendationLikeTable : Migration
+    public partial class FixRecommendationLikeForeignKey : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -31,8 +31,7 @@ namespace Mock.Migrations
                         name: "FK_RecommendationLikes_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "UserId");
                 });
 
             migrationBuilder.CreateIndex(

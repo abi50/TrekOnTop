@@ -24,8 +24,24 @@ namespace Mock
             optionsBuilder.UseSqlServer("server=LAPTOP-8RM4IF3S\\SQLEXPRESS;database=trek_on_top;trusted_connection=true;");
             //sqlServerOptions => sqlServerOptions.EnableRetryOnFailure());
         }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // ❌ ביטול מחיקה Cascading ב-UserId כדי למנוע בעיה של מסלולים מרובים
+            modelBuilder.Entity<RecommendationLike>()
+                .HasOne(rl => rl.User)
+                .WithMany()
+                .HasForeignKey(rl => rl.UserId)
+                .OnDelete(DeleteBehavior.NoAction); // ✅ שינוי ל-"NO ACTION"
 
-        
+            // ✅ השארת מחיקה Cascading בקשר ל-Recommendation
+            modelBuilder.Entity<RecommendationLike>()
+                .HasOne(rl => rl.Recommendation)
+                .WithMany(r => r.RecommendationLikes)
+                .HasForeignKey(rl => rl.RecoId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+
 
 
 

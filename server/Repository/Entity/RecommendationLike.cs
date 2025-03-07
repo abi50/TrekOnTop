@@ -17,7 +17,7 @@ namespace Repository.Entity
         public int UserId { get; set; }
         public virtual User User { get; set; }
 
-        [ForeignKey("Recommendation")]
+        [ForeignKey("RecoId")]
         public int RecoId { get; set; }
         public virtual Recommendation Recommendation { get; set; }
 
