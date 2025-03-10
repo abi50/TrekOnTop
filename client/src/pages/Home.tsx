@@ -2,8 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { fetchImages } from '../services/api';
 import { Link } from 'react-router-dom';
 
-const Home = () => {
-    const [images, setImages] = useState([]);
+interface Image {
+    imageId: number;
+    url: string;
+    recommendationId: number;
+}
+
+const Home: React.FC = () => {
+    const [images, setImages] = useState<Image[]>([]);
 
     useEffect(() => {
         const getImages = async () => {
@@ -31,45 +37,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-
-
-
-
-
-
-
-
-// import React, { useEffect, useState } from 'react';
-// import { fetchImages } from '../services/api';
-
-// const Home = () => {
-//     const [images, setImages] = useState([]);
-
-//     useEffect(() => {
-//         const getImages = async () => {
-//             const data = await fetchImages();
-//             console.log("Fetched images:", data); // הדפסה לבדיקה
-//             setImages(data);
-//         };
-//         getImages();
-//     }, []);
-
-//     return (
-//         <div>
-//             <h1>Welcome to Image Gallery</h1>
-//             <div className="image-grid">
-//                 {images.map((img) => (
-//                     <img key={img.id} src={`http://localhost:5083${img.url}`} alt={img.name} width="200" />
-//                 ))}
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default Home;
-
-
-
-

@@ -1,31 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../styles/Recommendation.css";
+import { User, Recommendation } from "../types";
 
-interface User {
-    name: string;
-    profilPic: string;
-}
-
-interface Image {
-    imageId: number;
-    url: string;
-}
-
-interface Recommendation {
-    recoId: number;
-    title: string;
-    description: string;
-    images: Image[];
-    user?: User;
-    likes: number;
-    dislikes: number;
-    userLiked: boolean;
-    userDisliked: boolean;
-}
-
-const RecommendationsPage: React.FC = () => {
+const RecommendationsPage: React.FunctionComponent = () => {
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [user, setUser] = useState<User | null>(null);
     const navigate = useNavigate();
@@ -51,7 +30,8 @@ const RecommendationsPage: React.FC = () => {
 
     const fetchRecommendations = async () => {
         try {
-            const response = await axios.get<Recommendation[]>("https://localhost:5083/api/Recommendation");
+            const response = await axios.get<Recommendation[]>("https://localhost:7083/api/Recommendation");
+            console.log(response.data);
             const recommendationsWithData = response.data.map(reco => ({
                 ...reco,
                 userLiked: false,

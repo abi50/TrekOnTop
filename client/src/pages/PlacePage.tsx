@@ -1,12 +1,13 @@
-
 import "../styles/PlacePage.css";  
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Place, Country } from '../types';
 
-const PlacesPage = () => {
-    const [places, setPlaces] = useState([]);
-    const [filteredPlaces, setFilteredPlaces] = useState([]);
-    const [countries, setCountries] = useState([]);
+
+const PlacesPage: React.FC = () => {
+    const [places, setPlaces] = useState<Place[]>([]);
+    const [filteredPlaces, setFilteredPlaces] = useState<Place[]>([]);
+    const [countries, setCountries] = useState<Country[]>([]);
     const [selectedCountry, setSelectedCountry] = useState("");
 
     useEffect(() => {
@@ -14,7 +15,7 @@ const PlacesPage = () => {
         fetchCountries();
     }, []);
 
-    const fetchPlaces = async (countryId = "") => {
+    const fetchPlaces = async (countryId: string = "") => {
         try {
             const url = countryId 
                 ? `https://localhost:7083/api/Place/byCountry/${countryId}` 
@@ -41,13 +42,13 @@ const PlacesPage = () => {
     };
     
 
-    const handleFilterChange = (e) => {
+    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedCountryName = e.target.value;
         setSelectedCountry(selectedCountryName);
     
         // מציאת ה-ID של המדינה שנבחרה
         const selectedCountry = countries.find(c => c.countryName === selectedCountryName);
-        const countryId = selectedCountry ? selectedCountry.countryId : "";
+        const countryId = selectedCountry ? selectedCountry.countryId.toString() : "";
     
         fetchPlaces(countryId); // קריאה לשרת עם ID של המדינה
     };
@@ -59,7 +60,7 @@ const PlacesPage = () => {
             <select onChange={handleFilterChange} className="dropdown">
                 <option value="">All Countries</option>
                 {countries.map((country) => (
-                    <option key={country} value={country}>{country}</option>
+                    <option key={country.countryId} value={country.countryName}>{country.countryName}</option>
                 ))}
             </select>
 

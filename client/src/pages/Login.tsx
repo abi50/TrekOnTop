@@ -3,18 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../services/api';
 import '../styles/Login.css';
 
-
-const Login = () => {
+const Login: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    
-        
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError('');
+
         try {
             console.log('Sending login request:', { email, password });
             const token = await loginUser(email, password);

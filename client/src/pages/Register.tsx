@@ -2,17 +2,16 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/api';
 import '../styles/Register.css';
-    
 
-const Register = () => {
+const Register: React.FC = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [profilePic, setProfilePic] = useState(null);
+    const [profilePic, setProfilePic] = useState<File | null>(null);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
 
@@ -57,7 +56,11 @@ const Register = () => {
                 <input 
                     type="file" 
                     accept="image/*"
-                    onChange={(e) => setProfilePic(e.target.files[0])}
+                    onChange={(e) => {
+                        if (e.target.files) {
+                            setProfilePic(e.target.files[0]);
+                        }
+                    }}
                 />
                 <button type="submit">Register</button>
             </form>

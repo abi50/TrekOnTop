@@ -36,7 +36,7 @@ namespace TrekOnTop.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register([FromQuery] UserDto newUser)
+        public IActionResult Register([FromForm] RegisterDto newUser)
         {
             if (string.IsNullOrEmpty(newUser.Email) || string.IsNullOrEmpty(newUser.Password))
                 return BadRequest("Email and Password are required.");
@@ -47,10 +47,31 @@ namespace TrekOnTop.Controllers
             if (_service.GetAll().Any(x => x.Email == newUser.Email))
                 return BadRequest("User with this email already exists.");
 
-            newUser.Password = HashPassword(newUser.Password);
-            _service.AddItem(newUser);
-            return Ok("User registered successfully.");
+            byte[]? profilePic = null;
+            if (newUser.File != null && newUser.File.Length > 0)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                    newUser.File.CopyTo(memoryStream);
+                    profilePic = memoryStream.ToArray();
+                }
+            }
+
+            var userDto = new UserDto
+            {
+                Name = newUser.Name,
+                Email = newUser.Email,
+                Password = HashPassword(newUser.Password),
+                ProfilPic = profilePic
+            };
+
+            var addedUser = _service.AddItem(userDto);
+            var token = GenerateToken(addedUser);
+
+            return Ok( token );
         }
+
+
 
         private string GenerateToken(UserDto user)
         {
