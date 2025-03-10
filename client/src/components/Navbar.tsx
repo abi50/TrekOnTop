@@ -1,21 +1,23 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import "../styles/Home.css";
 
-const Navbar = () => {
-    return (
-        <nav>
-            <ul>
-                <li><Link to="/">Home</Link></li>
-                <li><Link to="/search">Search</Link></li>
-                <li><Link to="/profile">Profile</Link></li>
-                <li><Link to="/login">Login</Link></li>
-                <li><Link to="/register">Register</Link></li>
-                <li><Link to="placePage">places</Link></li>
-                <li><Link to="/recommendation">recommendations</Link></li>
-            </ul>
-        </nav>
-    );
+interface NavbarProps {
+  onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onSearch }) => {
+  return (
+    <nav className="navbar">
+      <h2>🌍 המלצות למטייל</h2>
+      <input type="text" placeholder="🔍 חפש מקום..." onChange={onSearch} className="nav-search" />
+      <div className="nav-links">
+        <a href="/">בית</a>
+        <a href="/places">מקומות</a>
+        <a href="/categories">קטגוריות</a>
+        <a href="/login">התחברות</a>
+      </div>
+    </nav>
+  );
 };
 
 export default Navbar;
-
