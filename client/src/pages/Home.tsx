@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import "./Home.css";
+import "../styles/Home.css";
 
 interface Place {
   placeId: number;
@@ -16,7 +16,7 @@ const Home = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/place")
+      .get("https://localhost:7083/api/Place")
       .then((response) => {
         setPlaces(response.data);
       })
