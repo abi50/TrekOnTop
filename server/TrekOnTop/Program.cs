@@ -93,8 +93,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors(builder =>
     builder.AllowAnyOrigin()
            .AllowAnyMethod()
-           .AllowAnyHeader()
-);
+           .AllowAnyHeader());
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images")),
