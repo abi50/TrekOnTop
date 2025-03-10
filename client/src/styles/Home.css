@@ -1,0 +1,32 @@
+.container {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(to right, #ff7e5f, #feb47b);
+    min-height: 100vh;
+  }
+  
+  .title {
+    font-size: 2rem;
+    color: white;
+    margin-bottom: 20px;
+  }
+  
+  .placesGrid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .placeCard {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+  }
+  
+  .placeCard:hover {
+    transform: scale(1.05);
+  }
+  
