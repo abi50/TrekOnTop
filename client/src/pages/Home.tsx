@@ -1,59 +1,35 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../styles/Home.css";
+import PlaceCard from "../components/PlaceCard";
 
-interface Recommendation {
-  recoId: number;
-  title: string;
-  description: string;
-  likes: number;
-  dislikes: number;
+interface PlaceDto {
+  placeId: number;
+  placeName: string;
+  categoryId: number;
+  cityId: number;
+  latitude: number;
+  longitude: number;
 }
 
-interface HomeProps {
-  searchQuery: string;
-}
-
-const Home: React.FC<HomeProps> = ({ searchQuery }) => {
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [filteredRecommendations, setFilteredRecommendations] = useState<Recommendation[]>([]);
+const Home: React.FC = () => {
+  const [places, setPlaces] = useState<PlaceDto[]>([]);
 
   useEffect(() => {
-    axios.get("https://localhost:7083/api/Recommendation")
+    axios.get("https://localhost:7083/api/Place")
       .then(response => {
-        setRecommendations(response.data);
-        setFilteredRecommendations(response.data);
+        setPlaces(response.data);
       })
-      .catch(error => console.error("Error fetching recommendations:", error));
+      .catch(error => console.error("Error fetching places:", error));
   }, []);
-
-  useEffect(() => {
-    const query = searchQuery.toLowerCase();
-    setFilteredRecommendations(recommendations.filter(rec =>
-      rec.title.toLowerCase().includes(query) ||
-      rec.description.toLowerCase().includes(query)
-    ));
-  }, [searchQuery, recommendations]);
 
   return (
     <div className="home-container">
-      <div className="content">
-        <h1>המלצות פופולריות</h1>
-        <div className="recommendations">
-          {filteredRecommendations.length > 0 ? (
-            filteredRecommendations.map((rec) => (
-              <div key={rec.recoId} className="recommendation-card">
-                <h3>{rec.title}</h3>
-                <p>{rec.description}</p>
-                <div className="likes">
-                  👍 {rec.likes} | 👎 {rec.dislikes}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p>לא נמצאו המלצות</p>
-          )}
-        </div>
+      <h1>🌎 מקומות מומלצים</h1>
+      <div className="places-container">
+        {places.map(place => (
+          <PlaceCard key={place.placeId} place={place} />
+        ))}
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ const App: React.FC = () => {
         <Navbar onSearch={handleSearch} />
         <div className="content">
           <Routes>
-            <Route path="/" element={<Home searchQuery={searchQuery} />} />
+            <Route path="/" element={<Home  />} />
             {/* <Route path="/place/:id" element={<PlacePage searchQuery={searchQuery} />} /> */}
           </Routes>
         </div>

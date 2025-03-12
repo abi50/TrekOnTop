@@ -1,36 +1,32 @@
-export interface User {
-    name: string;
-    profilPic: string;
-    email: string;
-    images: Image[];
-}
-
-export interface Image {
-    imageId: number;
-    url: string;
-}
-
-export interface Recommendation {
+export interface RecommendationDto {
     recoId: number;
     title: string;
     description: string;
-    images: Image[];
-    user?: User;
     likes: number;
     dislikes: number;
-    userLiked: boolean;
-    userDisliked: boolean;
-}
-export interface Place {
+    placeId: number;
+    userId: number;
+  }
+  
+  export interface PlaceDto {
     placeId: number;
     placeName: string;
-    imageUrl: string;
-    country: string;
+    categoryId: number;
+    cityId: number;
     latitude: number;
     longitude: number;
-}
-
-export interface Country {
-    countryId: number;
-    countryName: string;
-}
+  }
+  
+  export interface ImageDto {
+    imageId: number;
+    url: string;
+    recommendationId: number;
+  }
+  
+  export interface UserDto {
+    userId: number;
+    name: string;
+    email: string;
+    profilPic: string; // base64
+  }
+  
