@@ -1,0 +1,15 @@
+.nearby-page {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #c2e9fb, #a1c4fd);
+}
+
+h2 {
+    margin-bottom: 20px;
+}
+
+.map-container {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border-radius: 15px;
+    overflow: hidden;
+}

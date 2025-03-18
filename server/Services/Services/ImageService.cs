@@ -62,8 +62,7 @@ namespace Services.Services
                 {
                     Directory.CreateDirectory(imagesPath);
                 }
-
-                var fileName = $"{Guid.NewGuid()}_{item.File.FileName}";
+                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(item.File.FileName)}";
                 var filePath = Path.Combine(imagesPath, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
@@ -71,8 +70,8 @@ namespace Services.Services
                     item.File.CopyTo(stream);
                 }
 
-                // שמירת הנתיב למסד הנתונים כך שהתמונה תהיה זמינה דרך `http://localhost:5000/Images/{fileName}`
                 item.Url = $"/Images/{fileName}";
+
             }
 
             Console.WriteLine("Mapping to Image entity.");

@@ -112,5 +112,19 @@ namespace TrekOnTop.Controllers
             _recommendationService.Delete(id);
             return NoContent();
         }
+
+        // RecommendationController.cs
+        [HttpGet("byPlace/{placeId}")]
+        public IActionResult GetRecommendationsByPlace(int placeId)
+        {
+            var recommendations = _recommendationService.GetAll()
+                .Where(r => r.PlaceId == placeId).ToList();
+
+            if (!recommendations.Any())
+                return NotFound("No recommendations found for this place.");
+
+            return Ok(recommendations);
+        }
+
     }
 }

@@ -1,31 +1,31 @@
-
-import React, { useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { SearchProvider } from "./context/SearchContext"; // הוספת ה-Provider
 import Home from "./pages/Home";
+import Map from "./components/NearbyPlaces";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import PlacePage from "./pages/RecommendationPage";  // דוגמה לעמוד נוסף
+import Auth from "./pages/Login";
+// import PlacePage from "./pages/RecommendationPage";
 
 const App: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
   return (
-    <Router>
-      <div className="app-container">
-        <Navbar onSearch={handleSearch} />
-        <div className="content">
-          <Routes>
-            <Route path="/" element={<Home  />} />
-            {/* <Route path="/place/:id" element={<PlacePage searchQuery={searchQuery} />} /> */}
-          </Routes>
+    <SearchProvider>
+      <Router>
+        <div className="app-container">
+          <Navbar />
+          <div className="content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/map" element={<Map />} />
+              <Route path="/auth" element={<Auth />} />
+              {/* <Route path="/place/:id" element={<PlacePage />} /> */}
+            </Routes>
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    </Router>
+      </Router>
+    </SearchProvider>
   );
 };
 

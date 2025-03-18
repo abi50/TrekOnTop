@@ -1,4 +1,5 @@
 ﻿using Common.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Services.Interfaces;
@@ -72,6 +73,18 @@ namespace TrekOnTop.Controllers
         }
 
 
+        [Authorize] // מחייב טוקן תקף
+        [HttpGet("check")]
+        public IActionResult CheckUser()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized("User is not logged in.");
+            }
+
+            return Ok(new { message = "User is authenticated", userId = userIdClaim.Value });
+        }
 
         private string GenerateToken(UserDto user)
         {

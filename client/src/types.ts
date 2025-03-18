@@ -16,7 +16,7 @@ export interface RecommendationDto {
     latitude: number;
     longitude: number;
   }
-  
+ 
   export interface ImageDto {
     imageId: number;
     url: string;
@@ -29,4 +29,15 @@ export interface RecommendationDto {
     email: string;
     profilPic: string; // base64
   }
-  
+  export interface CategoryDto{
+    categoryId: number;
+    name: string;
+    isDeleted: boolean;
+  }
+  export interface CountryDto{
+    
+      countryId: number;
+      countryName: string;
+      countryCode: string;
+    
+  }

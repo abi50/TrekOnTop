@@ -1,0 +1,27 @@
+.recommendation-card {
+  border-radius: 15px;
+  box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+  background-color: #fff;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.recommendation-card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.recommendation-card h4 {
+  font-size: 1.4rem;
+  margin: 10px 0;
+}
+
+.recommendation-card p {
+  font-size: 1rem;
+  color: #666;
+}
+
+.recommendation-card .likes {
+  font-weight: bold;
+  color: #555;
+}

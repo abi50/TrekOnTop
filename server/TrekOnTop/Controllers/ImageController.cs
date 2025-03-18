@@ -119,19 +119,25 @@ namespace TrekOnTop.Controllers
             {
                 return NotFound($"Image with ID {id} not found.");
             }
+
             if (string.IsNullOrEmpty(image.Url))
             {
-                return NotFound("Image not found.");
+                return NotFound("Image URL not found.");
             }
 
-            var filePath = Path.Combine(Environment.CurrentDirectory, image.Url.TrimStart('/'));
+            // תקני את הנתיב לנתיב הנכון לפי מיקום התמונות
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", image.Url.TrimStart('/'));
+
             if (!System.IO.File.Exists(filePath))
             {
                 return NotFound("Image file not found on server.");
             }
 
-            return PhysicalFile(filePath, "image/jpeg");
+            var contentType = "image/jpeg"; // אם יש צורך, תוכלי לגוון את הסוג לפי התמונה
+            return PhysicalFile(filePath, contentType);
         }
+
+
 
     }
 }
