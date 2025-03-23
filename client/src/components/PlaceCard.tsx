@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import RecommendationCard from "../components/RecommendationCard";
 import { RecommendationDto, PlaceDto, ImageDto, UserDto } from "../types";
+import { useNavigate } from "react-router-dom";
 
 interface PlaceCardProps {
   place: PlaceDto;
@@ -13,7 +14,10 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place }) => {
   const [images, setImages] = useState<ImageDto[]>([]);
   const [currentImage, setCurrentImage] = useState(0);
   const [showRecommendations, setShowRecommendations] = useState(false);
-
+  const navigate = useNavigate();
+  const handleClickAddReco = () => {
+    navigate('/addReco', { state: { place } });
+  };
   useEffect(() => {
     axios.get(`https://localhost:7083/api/Recommendation`)
       .then(res => setRecommendations(res.data.filter((r: RecommendationDto) => r.placeId === place.placeId)
@@ -40,29 +44,29 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place }) => {
 
 
   return (
-    <div className="place-card" onClick={() => setShowRecommendations(!showRecommendations)}>
-      <div 
-        className="place-image" 
-        style={{
-            backgroundImage: images.length 
-              ? `url(https://localhost:7083/api/Image/getimage/${images[currentImage].imageId})` 
-              : undefined,
-            backgroundColor: images.length ? undefined : "#ccc"
-          }}
-                />
+    <div className="place-card">
+      <img className="place-image" src={images.length ? `https://localhost:7083/api/Image/getimage/${images[currentImage].imageId}` : '/default-image.png'} alt={place.placeName} />
+      
       <div className="place-info">
         <h2>{place.placeName}</h2>
-        <p>סה"כ המלצות: {recommendations.length}</p>
+        <button onClick={() => setShowRecommendations(!showRecommendations)} className="btn-read-more">
+          {showRecommendations ? 'סגור המלצות' : 'קרא עוד'}
+        </button>
       </div>
+    
       {showRecommendations && (
+        
         <div className="recommendations-container">
-          {recommendations.map(rec => (
+       <button onClick={handleClickAddReco} className="btn-add-recommendation">
+         הוסף המלצה
+       </button>          {recommendations.map(rec => (
             <RecommendationCard key={rec.recoId} recommendation={rec} />
           ))}
         </div>
       )}
     </div>
-  );
+    );
+    
 };
 
 export default PlaceCard;

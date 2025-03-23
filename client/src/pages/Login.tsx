@@ -1,7 +1,10 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import "../styles/Auth.css";
-
 import "../styles/Home.css";
+import { useDispatch } from "react-redux";
+import { login, setUser } from "../reduxs/userSlice"; 
+import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 interface FormData {
   name: string;
@@ -12,6 +15,9 @@ interface FormData {
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -35,35 +41,84 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const formDataToSend = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null) {
-        formDataToSend.append(key, value as string | Blob);
+
+    try {
+      let token = "";
+      const formDataToSend = new FormData();
+
+      // שדות בסיסיים - תמיד נשלחים
+      formDataToSend.append("Email", formData.email);
+      formDataToSend.append("Password", formData.password);
+      console.log("Email:", formData.email);
+      console.log("Password:", formData.password);
+
+      if (isLogin) {
+        // ✅ התחברות עם FormData
+        const response = await axios.post(
+          "https://localhost:7083/api/auth/login",
+          formDataToSend
+        );
+        token = response.data;
+      } else {
+        // ✅ הרשמה עם FormData כולל שם וקובץ
+        formDataToSend.append("Name", formData.name);
+        console.log("Name:", formData.name);
+        if (formData.file) {
+          formDataToSend.append("File", formData.file);
+          console.log("File:", formData.file);
+        }
+        console.log("formDataToSend:", formDataToSend);
+        const response = await axios.post(
+          "https://localhost:7083/api/auth/register",
+          formDataToSend
+         
+        );
+        token = response.data;
       }
-    });
 
-      const endpoint = isLogin
-      ? `https://localhost:7083/api/auth/login?email=${encodeURIComponent(formData.email)}&password=${encodeURIComponent(formData.password)}`
-      : "https://localhost:7083/api/auth/register";
-    
-    const response = await fetch(endpoint, {
-      method: "POST",
-      body: isLogin ? null : formDataToSend,
-    });
-  
+      localStorage.setItem("token", token);
+      console.log("token saved in local storage", token);
 
-    if (!response.ok) {
-      alert("Error: " + (await response.text()));
-    } else {
-      const token = await response.text();
-      localStorage.setItem('token', token);
+      const userResponse = await axios.get("https://localhost:7083/api/auth/check", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const userData = userResponse.data;
+      console.log("userData:", userData); 
+      dispatch(login({
+        id: userData.userId,
+        name: userData.name,
+        email: userData.email,
+        token: token,
+      }));
+      dispatch(setUser({
+        id: userData.userId,
+        name: userData.name,
+        email: userData.email,
+      }));
       alert("Success!");
+      const redirect = localStorage.getItem("redirectAfterLogin");
+      if (redirect) {
+        localStorage.removeItem("redirectAfterLogin");
+        navigate(redirect);
+      } else {
+        navigate("/");
+      }
+
+    } catch (error) {
+      console.error("Error during login/register:", error);
+      if (axios.isAxiosError(error)) {
+        alert("Error: " + (error.response?.data?.message || error.message));
+      } else {
+        alert("An unexpected error occurred: " + String(error));
+      }
     }
   };
 
   return (
     <div className="auth-container">
-
       <div className="auth-box">
         <h2 className="auth-title">{isLogin ? "Login" : "Register"}</h2>
         <form onSubmit={handleSubmit} className="auth-form">

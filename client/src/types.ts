@@ -41,3 +41,8 @@ export interface RecommendationDto {
       countryCode: string;
     
   }
+export interface CityDto{
+     id: number,
+    name: string,
+    countryId: number
+}
