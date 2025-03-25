@@ -7,6 +7,7 @@ import PasswordVerificationModal from "../components/PasswordVerificationModal";
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import ExportUserDataModal from "../components/ExportUserDataModal";
 import DeleteAccountModal from "../components/DeleteAccountModal";
+import UserMenu from "../components/UserMenu";
 import "../styles/UserProfilePage.css";
 
 const UserProfilePage = () => {
@@ -16,36 +17,41 @@ const UserProfilePage = () => {
     const [verifyPasswordModal, setVerifyPasswordModal] = useState(false);
     const [recommendations, setRecommendations] = useState<any[]>([]);
     const [places, setPlaces] = useState<any[]>([]);
-    const [showPassword, setShowPassword] = useState(false);
+    const [imagesByReco, setImagesByReco] = useState<Record<number, any[]>>({});
+    const [currentImageIndex, setCurrentImageIndex] = useState<Record<number, number>>({});
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [showExportData, setShowExportData] = useState(false);
     const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
     useEffect(() => {
-        if (!user) return;
-
-        const fetchProfileImage = async () => {
-            try {
-                const res = await axios.get(
-                    `https://localhost:7083/api/User/getimage/${user.user?.id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${user.token}`,
-                        },
-                        responseType: "blob",
-                    }
-                );
-                setProfileImageUrl(URL.createObjectURL(res.data));
-            } catch (e) {
-                console.error("שגיאה בטעינת תמונת הפרופיל", e);
-            }
-        };
+        if (!user || !user.user) return;
+        const fetchProfileImage = () => {
+            setProfileImageUrl(`https://localhost:7083/api/User/getimage/${user.user?.id}`);
+          };
+          
 
         const fetchRecommendations = async () => {
             try {
                 const res = await axios.get("https://localhost:7083/api/Recommendation");
                 const userRecs = res.data.filter((r: any) => r.userId === user.user?.id);
                 setRecommendations(userRecs);
+
+                const imageMap: Record<number, any[]> = {};
+                const imageIndexMap: Record<number, number> = {};
+
+                await Promise.all(userRecs.map(async (rec: any) => {
+                    try {
+                        const imgRes = await axios.get(`https://localhost:7083/api/Recommendation/${rec.recoId}/images`);
+                        imageMap[rec.recoId] = imgRes.data;
+                        imageIndexMap[rec.recoId] = 0;
+                    } catch (e) {
+                        imageMap[rec.recoId] = [];
+                        imageIndexMap[rec.recoId] = 0;
+                    }
+                }));
+
+                setImagesByReco(imageMap);
+                setCurrentImageIndex(imageIndexMap);
             } catch (e) {
                 console.error("שגיאה בטעינת המלצות", e);
             }
@@ -65,7 +71,23 @@ const UserProfilePage = () => {
         fetchPlaces();
     }, [user]);
 
-    if (!user) {
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentImageIndex((prev) => {
+                const updated: Record<number, number> = { ...prev };
+                for (const recoId in imagesByReco) {
+                    const images = imagesByReco[recoId];
+                    if (images && images.length > 1) {
+                        updated[recoId] = (prev[recoId] + 1) % images.length;
+                    }
+                }
+                return updated;
+            });
+        }, 4000);
+        return () => clearInterval(interval);
+    }, [imagesByReco]);
+
+    if (!user || !user.user) {
         return <div className="wallet-style">משתמש לא מחובר</div>;
     }
 
@@ -82,100 +104,79 @@ const UserProfilePage = () => {
 
     return (
         <div className="wallet-style">
-            <h2 className="section-title">פרטי המשתמש</h2>
+            {/* <div className="user-menu-wrapper"> */}
+                {/* <UserMenu
+                    profileImage={profileImageUrl}
+                    name={user.user.name}
+                    email={user.user.email}
+                    onEdit={handleEditClick}
+                    onChangePassword={() => setShowChangePassword(true)}
+                    onExport={() => setShowExportData(true)}
+                    onDelete={() => setShowDeleteAccount(true)}
+                /> */}
+            {/* </div> */}
+
             <div className="user-card">
-                <div className="user-info">
-                    <div className="icon-placeholder">
-                        <img src={profileImageUrl} alt="Profile" />
-                    </div>
-                    <div>
-                        <h4 style={{ fontSize: "1.8rem" }}>{user.user?.name}</h4>
-                        <p>{user.user?.email}</p>
-                    </div>
-                </div>
-                <div className="field-group">
-                    <label>סיסמה</label>
-                    <div className="password-wrapper">
-                        <input type={showPassword ? "text" : "password"} value="*************" disabled />
-                        <button
-                            className="toggle-visibility"
-                            onClick={() => setShowPassword(!showPassword)}
-                            type="button"
-                        >
-                            👁️
-                        </button>
+                <div className="user-main">
+                    <img src={profileImageUrl} className="profile-pic" alt="Profile" />
+                    <div className="user-details">
+                        <div className="info-line"><span>👤</span> {user.user?.name}</div>
+                        <div className="info-line"><span>📧</span> {user.user?.email}</div>
+                        <div className="info-line"><span>🔒</span> הסיסמה שלך שמורה בצורה מאובטחת</div>
                     </div>
                 </div>
-                <div className="actions dropdown-actions">
-                    <button className="main-action">אפשרויות ⚙</button>
-                    <div className="dropdown-menu">
-                        <button onClick={handleEditClick}>✏ ערוך פרופיל</button>
-                        <button onClick={() => setShowChangePassword(true)}>🔑 שנה סיסמה</button>
-                        <button onClick={() => setShowExportData(true)}>📁 ייצא נתונים</button>
-                        <button onClick={() => setShowDeleteAccount(true)}>🗑 מחק חשבון</button>
-                    </div>
+
+                <div className="user-actions">
+                    <button onClick={handleEditClick}>✏ עריכת פרופיל</button>
+                    <button onClick={() => setShowChangePassword(true)}>🔑 שינוי סיסמה</button>
+                    <button onClick={() => setShowExportData(true)}>📁 ייצוא נתונים</button>
+                    <button onClick={() => setShowDeleteAccount(true)}>🗑 מחיקת חשבון</button>
                 </div>
             </div>
 
             {verifyPasswordModal && (
-                <PasswordVerificationModal
-                    token={user.token!}
-                    onSuccess={handleVerified}
-                    onClose={() => setVerifyPasswordModal(false)}
-                />
+                <PasswordVerificationModal token={user.token!} onSuccess={handleVerified} onClose={() => setVerifyPasswordModal(false)} />
             )}
-
             {showModal && (
-                <EditProfileModal
-                    user={{
-                        id: user.user!.id,
-                        name: user.user!.name,
-                        email: user.user!.email,
-                        token: user.token!,
-                    }}
-                    onClose={() => setShowModal(false)}
-                />
+                <EditProfileModal user={{ id: user.user.id, name: user.user.name, email: user.user.email, token: user.token! }} onClose={() => setShowModal(false)} />
             )}
+            {showChangePassword && (<ChangePasswordModal token={user.token!} onClose={() => setShowChangePassword(false)} />)}
+            {showExportData && (<ExportUserDataModal token={user.token!} onClose={() => setShowExportData(false)} />)}
+            {showDeleteAccount && (<DeleteAccountModal userId={user.user.id} token={user.token!} onClose={() => setShowDeleteAccount(false)} />)}
 
-            {showChangePassword && (
-                <ChangePasswordModal
-                    token={user.token!}
-                    onClose={() => setShowChangePassword(false)}
-                />
-            )}
-
-            {showExportData && (
-                <ExportUserDataModal
-                    token={user.token!}
-                    onClose={() => setShowExportData(false)}
-                />
-            )}
-
-            {showDeleteAccount && (
-                <DeleteAccountModal
-                    userId={user.user!.id}
-                    token={user.token!}
-                    onClose={() => setShowDeleteAccount(false)}
-                />
-            )}
-
-            <h3 className="recommendations-title" style={{ fontSize: "1.6rem" }}>ההמלצות שלי</h3>
+            <h3 className="recommendations-title">ההמלצות שלי</h3>
             <div className="recommendation-list">
-                {sortedRecommendations.map((rec: any) => {
-                    const place = places.find(p => p.placeId === rec.placeId);
-                    return (
-                        <div key={rec.recoId} className="recommendation-card">
-                            <h4>{rec.title}</h4>
-                            <p>{rec.description}</p>
-                            <p style={{ fontStyle: "italic", color: "#666" }}>מקום: {place?.placeName || "לא ידוע"}</p>
-                            <div className="likes">
-                                <span className="like">👍 {rec.likes}</span>
-                                <span className="dislike">👎 {rec.dislikes}</span>
+                {sortedRecommendations.length === 0 ? (
+                    <div className="no-recommendations">עוד לא פרסמת המלצות. הזמן לגלות מקומות ולשתף!</div>
+                ) : (
+                    sortedRecommendations.map((rec: any) => {
+                        const place = places.find(p => p.placeId === rec.placeId);
+                        const images = imagesByReco[rec.recoId] || [];
+                        const currentIndex = currentImageIndex[rec.recoId] || 0;
+                        return (
+                            <div key={rec.recoId} className="recommendation-card">
+                                <h4>{rec.title}</h4>
+                                <p>{rec.description}</p>
+                                <p className="place-name">מקום: {place?.placeName || "לא ידוע"}</p>
+                                {images.length > 0 && (
+                                    <div className="slider">
+                                        <img className="slider-image" src={`https://localhost:7083/api/Image/getimage/${images[currentIndex].imageId}`} alt="המלצה" />
+                                        <button className="arrow left" onClick={() => setCurrentImageIndex(prev => ({ ...prev, [rec.recoId]: (currentIndex - 1 + images.length) % images.length }))}>‹</button>
+                                        <button className="arrow right" onClick={() => setCurrentImageIndex(prev => ({ ...prev, [rec.recoId]: (currentIndex + 1) % images.length }))}>›</button>
+                                    </div>
+                                )}
+                                <div className="likes">
+                                    <span className="like">👍 {rec.likes}</span>
+                                    <span className="dislike">👎 {rec.dislikes}</span>
+                                </div>
+                                <button onClick={() => {
+                                    localStorage.setItem("editRecommendation", JSON.stringify({ ...rec, placeName: place?.placeName || "לא ידוע" }));
+                                    window.location.href = "/editReco";
+                                }}>ערוך המלצה</button>
                             </div>
-                            <button onClick={() => window.location.href = `/edit-recommendation/${rec.recoId}`}>ערוך המלצה</button>
-                        </div>
-                    );
-                })}
+                        );
+                    })
+                )}
             </div>
         </div>
     );

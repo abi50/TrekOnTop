@@ -31,6 +31,19 @@ namespace TrekOnTop.Controllers
         {
             return Ok(_recommendationService.GetAll());
         }
+        //שליפת כל ההמלצות מחולק לדפים בשביל טעיהנאינסופית
+        [HttpGet("paged")]
+        public IActionResult GetPagedRecommendations([FromQuery] int page = 1, [FromQuery] int limit = 10)
+        {
+            var all = _recommendationService.GetAll()
+                .OrderByDescending(r => r.RecoId) 
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToList();
+
+            return Ok(all);
+        }
+
 
         // ✅ שליפת המלצה לפי ID
         [HttpGet("{id}")]
@@ -73,8 +86,8 @@ namespace TrekOnTop.Controllers
             if (value == null)
                 return BadRequest("Invalid recommendation data.");
 
-            _recommendationService.AddItem(value);
-            return CreatedAtAction(nameof(Get), new { id = value.RecoId }, value);
+            var newRecommendation = _recommendationService.AddItem(value);
+            return CreatedAtAction(nameof(Post), new { id = newRecommendation.RecoId }, newRecommendation);
         }
 
         // ✅ עדכון המלצה (רק בעל ההמלצה יכול לערוך)

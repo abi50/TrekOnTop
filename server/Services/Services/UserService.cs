@@ -39,21 +39,27 @@ namespace Services.Services
 
         public UserDto AddItem(UserDto item)
         {
-            // שמירת הקובץ
             if (item.File != null && item.File.Length > 0)
             {
                 if (!Directory.Exists(_imagesFolder))
                 {
-                    Directory.CreateDirectory(_imagesFolder); // צור את התיקייה אם אינה קיימת
+                    Directory.CreateDirectory(_imagesFolder);
                 }
+                var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images");
+                if (!Directory.Exists(imagesPath))
+                {
+                    Directory.CreateDirectory(imagesPath);
+                }
+                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(item.File.FileName)}";
+                var filePath = Path.Combine(imagesPath, fileName);
 
-                var filePath = Path.Combine(_imagesFolder, item.File.FileName);
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    item.File.CopyTo(stream); // שמירת הקובץ בדיסק
+                    item.File.CopyTo(stream);
                 }
 
-                item.ProfilPic = File.ReadAllBytes(filePath); // שמירת התמונה כ-Byte Array
+                item.ProfilPic = $"/Images/{fileName}";
+
             }
 
             // מיפוי ושמירת המשתמש במסד הנתונים
@@ -62,8 +68,9 @@ namespace Services.Services
             return _mapper.Map<UserDto>(user);
         }
 
-
        
+
+
 
         public void Delete(int id)
         {
@@ -94,6 +101,30 @@ namespace Services.Services
 
         public UserDto Update(int id, UserDto item)
         {
+            if (item.File != null && item.File.Length > 0)
+            {
+                Console.WriteLine($"File detected: {item.File.FileName}");
+                if (!Directory.Exists(_imagesFolder))
+                {
+                    Console.WriteLine("Creating images folder.");
+                    Directory.CreateDirectory(_imagesFolder);
+                }
+                var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images");
+                if (!Directory.Exists(imagesPath))
+                {
+                    Directory.CreateDirectory(imagesPath);
+                }
+                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(item.File.FileName)}";
+                var filePath = Path.Combine(imagesPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    item.File.CopyTo(stream);
+                }
+
+                item.ProfilPic = $"/Images/{fileName}";
+
+            }
             var user = _mapper.Map<User>(item);
             var updatedUser = _repository.UpdateItem(id, user);
             return _mapper.Map<UserDto>(updatedUser);

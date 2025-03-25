@@ -14,13 +14,21 @@ const Home: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<number | null>(null);
   const { searchQuery } = useSearch();
+  //לגלילה אינסופית
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Fetch places, categories, and countries
   useEffect(() => {
-    axios.get("https://localhost:7083/api/Place")
+    axios.get("https://localhost:7083/api/Place/paged", {
+      params: { page: 1, limit: 6 }
+    })
       .then(response => {
         setPlaces(response.data);
+        setPage(2);
       })
+
       .catch(error => console.error("Error fetching places:", error));
 
     axios.get("https://localhost:7083/api/Category")
@@ -35,15 +43,54 @@ const Home: React.FC = () => {
       })
       .catch(error => console.error("Error fetching countries:", error));
   }, []);
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
+        !loading && hasMore
+      ) {
+        fetchMorePlaces();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, hasMore, page]);
+
 
   // Filter places based on search query, category, and country
   const filteredPlaces = places.filter(place => {
     const matchesSearch = place.placeName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory ? place.categoryId === selectedCategory : true;
+    // const city = cities.find(c => c.id === place.cityId);
+    // const matchesCountry = selectedCountry ? city?.countryId === selectedCountry : true;
+
     const matchesCountry = selectedCountry ? place.cityId === selectedCountry : true;
 
     return matchesSearch && matchesCategory && matchesCountry;
   });
+  const fetchMorePlaces = async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    try {
+      const res = await axios.get(`https://localhost:7083/api/Place/paged`, {
+        params: { page, limit: 6 }
+      });
+      const newPlaces = res.data;
+
+      if (newPlaces.length === 0) {
+        setHasMore(false);
+      } else {
+        setPlaces(prev => [...prev, ...newPlaces]);
+        setPage(prev => prev + 1);
+      }
+    } catch (err) {
+      console.error("Error fetching more places:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="home-container">
@@ -79,6 +126,7 @@ const Home: React.FC = () => {
           <p>לא נמצאו מקומות שמתאימים לחיפוש שלך.</p>
         )}
       </div>
+      {loading && <p style={{ textAlign: "center" }}>🔄 טוען מקומות נוספים...</p>}
 
     </div>
   );

@@ -1,0 +1,79 @@
+.edit-reco-container {
+    max-width: 700px;
+    margin: 30px auto;
+    padding: 20px;
+    font-family: "Rubik", sans-serif;
+  }
+  
+  .back-link {
+    display: inline-block;
+    margin-bottom: 15px;
+    color: #2563eb;
+    text-decoration: none;
+  }
+  
+  .reco-info {
+    background: #f2f2f2;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  input[type="text"],
+  textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  
+  .image-section h4 {
+    margin-top: 20px;
+  }
+  
+  .image-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .image-wrapper {
+    position: relative;
+  }
+  
+  .image-wrapper img {
+    width: 130px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  
+  .image-wrapper button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+  }
+  
+  .save-btn {
+    background-color: #10b981;
+    color: white;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-top: 20px;
+    cursor: pointer;
+  }
+  

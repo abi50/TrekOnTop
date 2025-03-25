@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Common.Dtos;
+using Microsoft.EntityFrameworkCore;
 using Repository.Entity;
 using Repository.Interfaces;
 using Services.Interfaces;
@@ -52,5 +53,6 @@ namespace Services.Services
             _repository.UpdateItem(id, place);
             return _mapper.Map<PlaceDto>(place);
         }
+        
     }
 }

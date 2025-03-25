@@ -80,6 +80,19 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // הכתובת של הקליינט שלך
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+
+builder.Services.AddHttpClient(); 
+
 
 var app = builder.Build();
 
@@ -90,10 +103,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(builder =>
-    builder.AllowAnyOrigin()
-           .AllowAnyMethod()
-           .AllowAnyHeader());
+
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -101,14 +111,16 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Images"
 });
 
+app.UseCors("AllowSpecificOrigins");
 
 app.UseHttpsRedirection();
 
 // ?? Add Authentication Middleware
 
-app.UseMiddleware<JwtMiddleware>();
 
 app.UseAuthentication();
+//app.UseMiddleware<JwtMiddleware>();
+
 app.UseAuthorization();
 
 

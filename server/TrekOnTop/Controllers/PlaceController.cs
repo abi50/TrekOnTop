@@ -1,8 +1,11 @@
 ﻿using Common.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Repository.Entity;
 using Services.Interfaces;
 using Services.Services;
+using System.Numerics;
+using System.Runtime.Intrinsics.X86;
 using System.Security.Claims;
 
 namespace TrekOnTop.Controllers
@@ -27,20 +30,35 @@ namespace TrekOnTop.Controllers
             {
                 return _placeService.GetAll();
             }
+            [HttpGet("paged")]
+            public IActionResult GetPagedPlaces([FromQuery] int page = 1, [FromQuery] int limit = 10)
+            {
+                var all = _placeService.GetAll()
+                    .OrderByDescending(p => p.PlaceId)
+                    .Skip((page - 1) * limit)
+                    .Take(limit)
+                    .ToList();
+          
+                return Ok(all);
+            }
 
-            // GET api/<UserController>/5
-            [HttpGet("{id}")]
+        // GET api/<UserController>/5
+        [HttpGet("{id}")]
             public PlaceDto Get(int id)
             {
                 return _placeService.GetById(id);
             }
 
-            // POST api/<UserController>
-            [HttpPost]
-            public void Post([FromForm] PlaceDto value)
-            {
-                _placeService.AddItem(value);
-            }
+        [HttpPost]
+        public IActionResult Post([FromBody] PlaceDto value)
+        {
+            if (string.IsNullOrEmpty(value.PlaceName))
+                return BadRequest("Place name is required.");
+
+            var newPlace = _placeService.AddItem(value);
+            return CreatedAtAction(nameof(Post), new { id = newPlace.PlaceId }, newPlace);
+        }
+
 
         // PUT api/<UserController>/5
         [HttpPut("{id}")]
@@ -86,6 +104,21 @@ namespace TrekOnTop.Controllers
          {
              _placeService.Delete(id);
          }
+        [HttpGet("checkIfPlaceExists")]
+        public IActionResult CheckIfPlaceExists([FromQuery] double? lat, [FromQuery] double? lng)
+        {
+            if (lat == null || lng == null)
+                return BadRequest("Latitude and Longitude are required.");
+
+            var place = _placeService.GetAll()
+               .FirstOrDefault(p => p.Latitude == lat && p.Longitude == lng);
+
+            if (place == null)
+                return NotFound("No place found");
+
+            return Ok(new { placeId = place.PlaceId });
+        }
+
 
         [HttpGet("byCountry/{countryId}")]
         public IActionResult GetPlacesByCountry(int countryId)

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Services.Interfaces;
+using Services.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -24,20 +25,21 @@ namespace TrekOnTop.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromQuery] string email, [FromQuery] string password)
+        public IActionResult Login([FromForm] LoginDto loginData)
         {
-            var user = _service.GetAll().FirstOrDefault(x => x.Email == email);
-            if (user == null || !VerifyPassword(password, user.Password))
+            var user = _service.GetAll().FirstOrDefault(x => x.Email == loginData.Email);
+            if (user == null || !VerifyPassword(loginData.Password, user.Password))
             {
-                return BadRequest("Invalid email or password");
+                return Unauthorized(new { message = "Invalid email or password" });
             }
 
             var token = GenerateToken(user);
             return Ok(token);
         }
 
+
         [HttpPost("register")]
-        public IActionResult Register([FromForm] RegisterDto newUser)
+        public IActionResult Register([FromForm] UserDto newUser)
         {
             if (string.IsNullOrEmpty(newUser.Email) || string.IsNullOrEmpty(newUser.Password))
                 return BadRequest("Email and Password are required.");
@@ -48,43 +50,73 @@ namespace TrekOnTop.Controllers
             if (_service.GetAll().Any(x => x.Email == newUser.Email))
                 return BadRequest("User with this email already exists.");
 
-            byte[]? profilePic = null;
-            if (newUser.File != null && newUser.File.Length > 0)
-            {
-                using (var memoryStream = new MemoryStream())
-                {
-                    newUser.File.CopyTo(memoryStream);
-                    profilePic = memoryStream.ToArray();
-                }
-            }
+            newUser.Password = HashPassword(newUser.Password); // ✅ שמירה עם הצפנה
 
-            var userDto = new UserDto
-            {
-                Name = newUser.Name,
-                Email = newUser.Email,
-                Password = HashPassword(newUser.Password),
-                ProfilPic = profilePic
-            };
-
-            var addedUser = _service.AddItem(userDto);
+            var addedUser = _service.AddItem(newUser);
             var token = GenerateToken(addedUser);
 
-            return Ok( token );
+            return Ok(token);
         }
 
 
-        [Authorize] // מחייב טוקן תקף
+
+
+        [Authorize]
         [HttpGet("check")]
         public IActionResult CheckUser()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
             {
                 return Unauthorized("User is not logged in.");
             }
 
-            return Ok(new { message = "User is authenticated", userId = userIdClaim.Value });
+            var user = _service.GetById(int.Parse(userIdClaim));
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            return Ok(new
+            {
+                userId = user.UserId,
+                name = user.Name,
+                email = user.Email
+            });
         }
+
+        [Authorize]
+        [HttpPost("verify-password")]
+        public IActionResult VerifyPassword([FromBody] string password)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var user = _service.GetById(userId);
+            if (user == null)
+                return NotFound("User not found.");
+
+            if (!VerifyPassword(password, user.Password))
+                return Unauthorized("Incorrect password");
+
+            return Ok("Password is correct");
+        }
+        [Authorize]
+        [HttpPut("change-password")]
+        public IActionResult ChangePassword([FromBody] string newPassword)
+        {
+            if (string.IsNullOrEmpty(newPassword))
+                return BadRequest("New password is required.");
+
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var user = _service.GetById(userId);
+            if (user == null)
+                return NotFound("User not found.");
+
+            user.Password = HashPassword(newPassword);
+            _service.Update(userId, user);
+
+            return Ok("Password updated successfully.");
+        }
+
 
         private string GenerateToken(UserDto user)
         {

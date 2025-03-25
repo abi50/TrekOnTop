@@ -16,6 +16,8 @@ const Navbar: React.FC = () => {
     localStorage.removeItem("token");
     window.location.href = "/";
   };
+  const adminEmail = localStorage.getItem("adminEmail") || "abigalBerk@gmail.com";
+  const isAdmin = user?.email === adminEmail;
 
   return (
     <nav className="navbar">
@@ -36,7 +38,9 @@ const Navbar: React.FC = () => {
         <a href="/places">מקומות</a>
         <a href="/categories">קטגוריות</a>
         <a href="/map">מקומות בקרבתי</a>
-        <a href="/addReco">הוספת המלצה</a>
+        <a href="/addReco">הוספת המלצה</a>  
+        {isAdmin && <a href="/admin/categories">ניהול קטגוריות</a>}
+
       </div>
 
       <div className="user-area">
@@ -51,6 +55,7 @@ const Navbar: React.FC = () => {
             {showMenu && (
               <div className="dropdown-menu">
                 <a href="/profilePage">פרופיל</a>
+                {isAdmin && <a href="/admin/change-admin-email">שינוי מייל מנהל</a>}
                 <button onClick={handleLogout}>התנתק</button>
               </div>
             )}

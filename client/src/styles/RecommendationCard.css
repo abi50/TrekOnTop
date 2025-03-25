@@ -87,3 +87,23 @@
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   cursor: pointer;
 }
+.like-btn,
+.dislike-btn {
+  transition: transform 0.2s ease, color 0.2s ease;
+  font-size: 1.1rem;
+  background: none;
+  border: none;
+  margin: 0 8px;
+  cursor: pointer;
+}
+
+.like-btn.clicked,
+.dislike-btn.clicked {
+  transform: scale(1.2);
+}
+
+.likes {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}

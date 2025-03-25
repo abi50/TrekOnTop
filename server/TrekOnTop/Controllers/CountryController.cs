@@ -30,10 +30,15 @@ namespace TrekOnTop.Controllers
 
         // POST api/<UserController>
         [HttpPost]
-        public void Post([FromForm] CountryDto value)
+        public IActionResult Post([FromForm] CountryDto value)
         {
-            _countryService.AddItem(value);
+            if (string.IsNullOrEmpty(value.CountryName))
+                return BadRequest("Country name is required.");
+
+            var newCountry = _countryService.AddItem(value);
+            return CreatedAtAction(nameof(Post), new { id = newCountry.CountryId }, newCountry);
         }
+
 
         // PUT api/<UserController>/5
         [HttpPut("{id}")]
@@ -48,5 +53,20 @@ namespace TrekOnTop.Controllers
         {
             _countryService.Delete(id);
         }
+
+        [HttpGet("byName")]
+        public IActionResult GetCountryByName( [FromQuery] string countryCode)
+        {
+            var country = _countryService.GetAll()
+                .FirstOrDefault(c => c.CountryCode == countryCode);
+
+            if (country == null)
+                return NotFound("Country not found.");
+
+            return Ok(country);
+        }
+
+
+
     }
 }

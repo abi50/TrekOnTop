@@ -17,14 +17,14 @@ const FilterPanel: React.FC<FilterProps> = ({ onFilterChange }) => {
   const [selectedCountry, setSelectedCountry] = useState<number | undefined>();
 
   useEffect(() => {
-    axios.get("/api/Category").then((res) => setCategories(res.data));
-    axios.get("/api/Country").then((res) => setCountries(res.data));
+    axios.get("https://localhost:7083/api/Category").then((res) => setCategories(res.data));
+    axios.get("https://localhost:7083/api/Country").then((res) => setCountries(res.data));
   }, []);
 
   useEffect(() => {
     if (selectedCountry) {
       axios
-        .get(`/api/City`)
+        .get(`https://localhost:7083/api/City`)
         .then((res) => setCities(res.data.filter((c: CityDto) => c.countryId === selectedCountry)));
     } else {
       setCities([]);
