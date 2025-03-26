@@ -11,32 +11,25 @@ using System.Text;
 
 namespace TrekOnTop.Controllers
 {
-    [Route("api/auth")]
     [ApiController]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly IService<UserDto> _service;
-        private readonly IConfiguration _config;
+        private readonly IAuthService _authService;
 
-        public AuthController(IService<UserDto> service, IConfiguration config)
+        public AuthController(IAuthService authService)
         {
-            _service = service;
-            _config = config;
+            _authService = authService;
         }
 
         [HttpPost("login")]
         public IActionResult Login([FromForm] LoginDto loginData)
         {
-            var user = _service.GetAll().FirstOrDefault(x => x.Email == loginData.Email);
-            if (user == null || !VerifyPassword(loginData.Password, user.Password))
-            {
-                return Unauthorized(new { message = "Invalid email or password" });
-            }
-
-            var token = GenerateToken(user);
-            return Ok(token);
+            var token = _authService.Login(loginData);
+            return token == null
+                ? Unauthorized("Invalid email or password")
+                : Ok(token);
         }
-
 
         [HttpPost("register")]
         public IActionResult Register([FromForm] UserDto newUser)
@@ -44,45 +37,29 @@ namespace TrekOnTop.Controllers
             if (string.IsNullOrEmpty(newUser.Email) || string.IsNullOrEmpty(newUser.Password))
                 return BadRequest("Email and Password are required.");
 
-            if (!IsValidEmail(newUser.Email))
+            if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(newUser.Email))
                 return BadRequest("Invalid email format.");
 
-            if (_service.GetAll().Any(x => x.Email == newUser.Email))
-                return BadRequest("User with this email already exists.");
-
-            newUser.Password = HashPassword(newUser.Password); // ✅ שמירה עם הצפנה
-
-            var addedUser = _service.AddItem(newUser);
-            var token = GenerateToken(addedUser);
-
-            return Ok(token);
+            try
+            {
+                var token = _authService.Register(newUser);
+                return Ok(token);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
-
-
-
 
         [Authorize]
         [HttpGet("check")]
         public IActionResult CheckUser()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                return Unauthorized("User is not logged in.");
-            }
-
-            var user = _service.GetById(int.Parse(userIdClaim));
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
-
-            return Ok(new
-            {
-                userId = user.UserId,
-                name = user.Name,
-                email = user.Email
-            });
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var user = _authService.GetUserById(userId);
+            return user == null
+                ? NotFound("User not found.")
+                : Ok(new { user.UserId, user.Name, user.Email });
         }
 
         [Authorize]
@@ -90,15 +67,10 @@ namespace TrekOnTop.Controllers
         public IActionResult VerifyPassword([FromBody] string password)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var user = _service.GetById(userId);
-            if (user == null)
-                return NotFound("User not found.");
-
-            if (!VerifyPassword(password, user.Password))
-                return Unauthorized("Incorrect password");
-
-            return Ok("Password is correct");
+            var result = _authService.VerifyPassword(userId, password);
+            return result ? Ok("Password is correct") : Unauthorized("Incorrect password");
         }
+
         [Authorize]
         [HttpPut("change-password")]
         public IActionResult ChangePassword([FromBody] string newPassword)
@@ -107,53 +79,9 @@ namespace TrekOnTop.Controllers
                 return BadRequest("New password is required.");
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var user = _service.GetById(userId);
-            if (user == null)
-                return NotFound("User not found.");
-
-            user.Password = HashPassword(newPassword);
-            _service.Update(userId, user);
+            _authService.ChangePassword(userId, newPassword);
 
             return Ok("Password updated successfully.");
-        }
-
-
-        private string GenerateToken(UserDto user)
-        {
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
-            };
-
-            var token = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
-                claims,
-                expires: DateTime.Now.AddMinutes(45),
-                signingCredentials: credentials
-            );
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private bool IsValidEmail(string email)
-        {
-            return new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email);
-        }
-
-        private string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            byte[] hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(hashedBytes);
-        }
-
-        private bool VerifyPassword(string enteredPassword, string storedHashedPassword)
-        {
-            return HashPassword(enteredPassword) == storedHashedPassword;
         }
     }
 }

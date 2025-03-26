@@ -8,11 +8,13 @@ namespace TrekOnTop.Controllers
     [ApiController]
     public class CategoryController:ControllerBase
     {
-        private readonly IService<CategoryDto> _categoryService;
-        public CategoryController(IService<CategoryDto> categoryService)
+        private readonly ICategoryService _categoryService;
+
+        public CategoryController(ICategoryService categoryService)
         {
             _categoryService = categoryService;
         }
+
 
         // GET: api/<UserController>
         [HttpGet]

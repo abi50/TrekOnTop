@@ -49,7 +49,7 @@ const Navbar: React.FC = () => {
             <img
               src={`https://localhost:7083/api/User/getimage/${user.id}`}
               alt="Profile"
-              className="profile-pic"
+              className="navbar-profile-pic"
               onClick={() => setShowMenu(!showMenu)}
             />
             {showMenu && (

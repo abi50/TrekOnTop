@@ -5,129 +5,82 @@ using Microsoft.Extensions.Configuration;
 using Repository.Entity;
 using Repository.Interfaces;
 using Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Services.Services
+public class UserService : IUserService
 {
-    public class UserService : IService<UserDto>
+    private readonly IRepository<User> _repository;
+    private readonly IMapper _mapper;
+    private readonly string _imagesFolder;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public UserService(IRepository<User> repository, IMapper mapper, IConfiguration config, IHttpContextAccessor httpContextAccessor)
     {
-        private readonly IRepository<User> _repository;
-        private readonly IMapper _mapper;
-        private readonly string _imagesFolder;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        _repository = repository;
+        _mapper = mapper;
+        _imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", config["ImagesFolder"]);
+        _httpContextAccessor = httpContextAccessor;
+    }
 
+    public int GetCurrentUserId()
+    {
+        var userId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) throw new Exception("User not authenticated.");
+        return int.Parse(userId);
+    }
 
+    public UserDto AddItem(UserDto item)
+    {
+        if (item.File != null && item.File.Length > 0)
+            item.ProfilPic = SaveImageToDisk(item.File);
 
-        public UserService(IRepository<User> repository, IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
-        {
-            _repository = repository;
-            _mapper = mapper;
-            _imagesFolder = Path.Combine(Environment.CurrentDirectory, configuration["ImagesFolder"]);
-            _httpContextAccessor = httpContextAccessor;
-        }
-        private int GetCurrentUserId()
-        {
-            var httpContextAccessor = new HttpContextAccessor();
-            var userIdClaim = httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier);
-            return userIdClaim != null ? int.Parse(userIdClaim.Value) : throw new Exception("User not authenticated.");
-        }
+        var user = _mapper.Map<User>(item);
+        _repository.AddItem(user);
+        return _mapper.Map<UserDto>(user);
+    }
 
-        public UserDto AddItem(UserDto item)
-        {
-            if (item.File != null && item.File.Length > 0)
-            {
-                if (!Directory.Exists(_imagesFolder))
-                {
-                    Directory.CreateDirectory(_imagesFolder);
-                }
-                var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images");
-                if (!Directory.Exists(imagesPath))
-                {
-                    Directory.CreateDirectory(imagesPath);
-                }
-                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(item.File.FileName)}";
-                var filePath = Path.Combine(imagesPath, fileName);
+    public UserDto Update(int id, UserDto item)
+    {
+        if (item.File != null && item.File.Length > 0)
+            item.ProfilPic = SaveImageToDisk(item.File);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    item.File.CopyTo(stream);
-                }
+        var user = _mapper.Map<User>(item);
+        var updated = _repository.UpdateItem(id, user);
+        return _mapper.Map<UserDto>(updated);
+    }
 
-                item.ProfilPic = $"/Images/{fileName}";
+    public void DeleteWithAuth(int id)
+    {
+        var currentUserId = GetCurrentUserId();
+        var user = _repository.Get(id) ?? throw new Exception("User not found.");
+        if (user.UserId != currentUserId)
+            throw new Exception("Unauthorized.");
 
-            }
+        _repository.DeleteItem(id);
+    }
 
-            // מיפוי ושמירת המשתמש במסד הנתונים
-            var user = _mapper.Map<User>(item);
-            _repository.AddItem(user);
-            return _mapper.Map<UserDto>(user);
-        }
+    public void Delete(int id) => _repository.DeleteItem(id);
 
-       
+    public List<UserDto> GetAll() => _mapper.Map<List<UserDto>>(_repository.GetAll());
 
+    public UserDto GetById(int id) => _mapper.Map<UserDto>(_repository.Get(id));
 
+    public string GetProfileImagePath(int id)
+    {
+        var user = _repository.Get(id);
+        if (user?.ProfilPic == null) throw new Exception("Image not found.");
+        return Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.ProfilPic.TrimStart('/'));
+    }
 
-        public void Delete(int id)
-        {
-            var currentUserId = GetCurrentUserId();
-            var user = _repository.Get(id);
-            if (user == null)
-                throw new Exception("User not found.");
+    private string SaveImageToDisk(IFormFile file)
+    {
+        if (!Directory.Exists(_imagesFolder)) Directory.CreateDirectory(_imagesFolder);
 
-            if (user.UserId != currentUserId)
-                throw new Exception("Unauthorized. You can only delete your own account.");
+        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
+        var path = Path.Combine(_imagesFolder, fileName);
+        using var stream = new FileStream(path, FileMode.Create);
+        file.CopyTo(stream);
 
-            _repository.DeleteItem(id);
-        }
-
-        public List<UserDto> GetAll()
-        {
-            var users = _repository.GetAll();
-            return _mapper.Map<List<UserDto>>(users);
-        }
-
-       
-
-        public UserDto GetById(int id)
-        {
-            var user = _repository.Get(id);
-            return _mapper.Map<UserDto>(user);
-        }
-
-        public UserDto Update(int id, UserDto item)
-        {
-            if (item.File != null && item.File.Length > 0)
-            {
-                Console.WriteLine($"File detected: {item.File.FileName}");
-                if (!Directory.Exists(_imagesFolder))
-                {
-                    Console.WriteLine("Creating images folder.");
-                    Directory.CreateDirectory(_imagesFolder);
-                }
-                var imagesPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Images");
-                if (!Directory.Exists(imagesPath))
-                {
-                    Directory.CreateDirectory(imagesPath);
-                }
-                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(item.File.FileName)}";
-                var filePath = Path.Combine(imagesPath, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    item.File.CopyTo(stream);
-                }
-
-                item.ProfilPic = $"/Images/{fileName}";
-
-            }
-            var user = _mapper.Map<User>(item);
-            var updatedUser = _repository.UpdateItem(id, user);
-            return _mapper.Map<UserDto>(updatedUser);
-        }
+        return $"/Images/{fileName}";
     }
 }

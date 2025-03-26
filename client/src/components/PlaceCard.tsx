@@ -4,6 +4,8 @@ import axios from "axios";
 import RecommendationCard from "../components/RecommendationCard";
 import { RecommendationDto, PlaceDto, ImageDto, UserDto } from "../types";
 import { useNavigate } from "react-router-dom";
+import "../styles/PlaceCard.css";
+import RecommendationModal from "./RecommendationModal";
 
 interface PlaceCardProps {
   place: PlaceDto;
@@ -24,6 +26,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place }) => {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [googleDetails, setGoogleDetails] = useState<GooglePlaceDetails | null>(null);
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
   const handleClickAddReco = () => {
     const placeDetails = {
       placeId: place.placeId,
@@ -40,20 +43,20 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place }) => {
   };
   
   useEffect(() => {
-    axios.get(`https://localhost:7083/api/Recommendation`)
-      .then(res => setRecommendations(res.data.filter((r: RecommendationDto) => r.placeId === place.placeId)
-      ))
+    axios.get("https://localhost:7083/api/Recommendation/byPlace/" + place.placeId)
+      .then(res => setRecommendations(res.data))
       .catch(console.error);
 
     axios.get("https://localhost:7083/api/Image")
-      .then(response => {
-        const relevantImages = response.data.filter((img: ImageDto) =>
-          recommendations.some(rec => rec.recoId === img.recommendationId)
+      .then(res => {
+        const relevant = res.data.filter((img: ImageDto) =>
+          res.data.some((rec: RecommendationDto) => rec.recoId === img.recommendationId)
         );
-        setImages(relevantImages);
+        setImages(relevant);
       })
-      .catch(error => console.error(error));
-  }, [place.placeId, recommendations]);
+      .catch(console.error);
+  }, [place.placeId]);
+
   useEffect(() => {
     const fetchGooglePlaceDetails = async () => {
       try {
@@ -96,57 +99,91 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place }) => {
 
     return () => clearInterval(interval);
   }, [images]);
+  useEffect(() => {
+    axios.get("https://localhost:7083/api/GooglePlaces/searchByText", {
+      params: { query: `${place.placeName}, ${place.latitude}, ${place.longitude}` }
+    }).then(res => {
+      const result = res.data.results[0];
+      if (!result) return;
+      return axios.get("https://localhost:7083/api/GooglePlaces/details", {
+        params: { placeId: result.place_id }
+      });
+    }).then(res => {
+      if (res) {
+        const d = res.data.result;
+   
+        setGoogleDetails({
+          name: d.name,
 
+          address: d.formatted_address,
+          photos: d.photos?.map((p: any) =>
+            `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${p.photo_reference}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+          ) || [],
+          rating: d.rating,
+          user_ratings_total: d.user_ratings_total,
+          website: d.website
+        });
+      }
+    }).catch(console.error);
+  }, [place.placeName]);
 
-  return (
-    <div className="place-card">
-      <img className="place-image" src={images.length ? `https://localhost:7083/api/Image/getimage/${images[currentImage].imageId}` : '/default-image.png'} alt={place.placeName} />
-
-      <div className="place-info">
-
-        {googleDetails && (
-          <div className="google-info" style={{
-            background: "#f9f9f9",
-            padding: "10px",
-            borderRadius: "10px",
-            marginTop: "10px",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-          }}>
-            <p><strong>כתובת:</strong> {googleDetails.address}</p>
-            {googleDetails.rating && (
-              <p><strong>דירוג:</strong> ⭐ {googleDetails.rating} ({googleDetails.user_ratings_total} ביקורות)</p>
-            )}
-            {googleDetails.website && (
-              <p><a href={googleDetails.website} target="_blank" rel="noopener noreferrer">🌐 אתר</a></p>
-            )}
-            {googleDetails.photos.length > 0 && (
-              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginTop: 8 }}>
-                {googleDetails.photos.slice(0, 5).map((url: string, idx: number) => (
-                  <img key={idx} src={url} alt="מקום" style={{ width: 100, height: 80, borderRadius: 8, objectFit: 'cover' }} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        <h2>{place.placeName}</h2>
-        <button onClick={() => setShowRecommendations(!showRecommendations)} className="btn-read-more">
-          {showRecommendations ? 'סגור המלצות' : 'קרא עוד'}
-        </button>
-      </div>
-
-      {showRecommendations && (
-
-        <div className="recommendations-container">
-          <button onClick={handleClickAddReco} className="btn-add-recommendation">
-            הוסף המלצה
-          </button>          {recommendations.map(rec => (
-            <RecommendationCard key={rec.recoId} recommendation={rec} />
-          ))}
-        </div>
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage(prev => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [images]);
+return (
+  <div className="place-card" onClick={() => navigate(`/place/${place.placeId}`)}>
+  <div
+    className="place-card-background"
+    style={{
+      backgroundImage: `url(${googleDetails?.photos?.[0] || "/default-image.png"})`,
+    }}
+  >
+    <div className="place-card-overlay">
+      <h2 className="place-name">{googleDetails?.name || place.placeName}</h2>
+      <p className="place-location">📍 {googleDetails?.address}</p>
+      {googleDetails?.rating && (
+        <p className="place-rating">⭐ {googleDetails.rating} ({googleDetails.user_ratings_total} ביקורות)</p>
       )}
     </div>
-  );
+  </div>
 
+  <div className="place-card-footer">
+    <img
+      src="/icons/search.png"
+      alt="מעבר לדף המקום"
+      className="footer-icon"
+      onClick={(e) => {
+        e.stopPropagation();
+        navigate(`/place/${place.placeId}`);
+      }}
+    />
+    <img
+      src="/icons/eye.gif"
+      alt="הצג המלצות"
+      className="footer-icon"
+      onClick={(e) => {
+        e.stopPropagation();
+        setShowModal(true);
+      }}
+    />
+  </div>
+
+  {showModal && (
+    <RecommendationModal
+      placeId={place.placeId}
+      placeName={place.placeName}
+      latitude={place.latitude}
+      longitude={place.longitude}
+      categoryId={place.categoryId}
+      recommendations={recommendations}
+      onClose={() => setShowModal(false)}
+    />
+  )}
+</div>
+);
 };
 
 export default PlaceCard;

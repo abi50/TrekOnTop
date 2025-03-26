@@ -46,6 +46,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddHttpClient<IGooglePlacesService, GooglePlacesService>();
 
 
 

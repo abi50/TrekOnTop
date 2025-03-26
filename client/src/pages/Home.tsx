@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "../styles/Home.css";
 import PlaceCard from "../components/PlaceCard";
-import { useSearch } from "../context/SearchContext";
 import { PlaceDto, CategoryDto, CountryDto } from "../types";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import "../styles/Home.css";
 
 const Home: React.FC = () => {
   const [places, setPlaces] = useState<PlaceDto[]>([]);
@@ -13,13 +10,10 @@ const Home: React.FC = () => {
   const [countries, setCountries] = useState<CountryDto[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<number | null>(null);
-  const { searchQuery } = useSearch();
-  //לגלילה אינסופית
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  // Fetch places, categories, and countries
   useEffect(() => {
     axios.get("https://localhost:7083/api/Place/paged", {
       params: { page: 1, limit: 6 }
@@ -28,21 +22,17 @@ const Home: React.FC = () => {
         setPlaces(response.data);
         setPage(2);
       })
-
       .catch(error => console.error("Error fetching places:", error));
 
     axios.get("https://localhost:7083/api/Category")
-      .then(response => {
-        setCategories(response.data);
-      })
+      .then(response => setCategories(response.data))
       .catch(error => console.error("Error fetching categories:", error));
 
     axios.get("https://localhost:7083/api/Country")
-      .then(response => {
-        setCountries(response.data);
-      })
+      .then(response => setCountries(response.data))
       .catch(error => console.error("Error fetching countries:", error));
   }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       if (
@@ -57,24 +47,12 @@ const Home: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loading, hasMore, page]);
 
-
-  // Filter places based on search query, category, and country
-  const filteredPlaces = places.filter(place => {
-    const matchesSearch = place.placeName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory ? place.categoryId === selectedCategory : true;
-    // const city = cities.find(c => c.id === place.cityId);
-    // const matchesCountry = selectedCountry ? city?.countryId === selectedCountry : true;
-
-    const matchesCountry = selectedCountry ? place.cityId === selectedCountry : true;
-
-    return matchesSearch && matchesCategory && matchesCountry;
-  });
   const fetchMorePlaces = async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
     try {
-      const res = await axios.get(`https://localhost:7083/api/Place/paged`, {
+      const res = await axios.get("https://localhost:7083/api/Place/paged", {
         params: { page, limit: 6 }
       });
       const newPlaces = res.data;
@@ -92,9 +70,16 @@ const Home: React.FC = () => {
     }
   };
 
+  const filteredPlaces = places.filter(place => {
+    const matchesCategory = selectedCategory ? place.categoryId === selectedCategory : true;
+    const matchesCountry = selectedCountry ? place.cityId === selectedCountry : true;
+    return matchesCategory && matchesCountry;
+  });
+
   return (
     <div className="home-container">
-      <h1>🌎 מקומות מומלצים</h1>
+      <h1>🌍 מקומות מומלצים</h1>
+
       <div className="filters-container">
         <div className="filter">
           <h3>סנן לפי קטגוריה</h3>
@@ -123,11 +108,11 @@ const Home: React.FC = () => {
             <PlaceCard key={place.placeId} place={place} />
           ))
         ) : (
-          <p>לא נמצאו מקומות שמתאימים לחיפוש שלך.</p>
+          <p>לא נמצאו מקומות מתאימים.</p>
         )}
       </div>
-      {loading && <p style={{ textAlign: "center" }}>🔄 טוען מקומות נוספים...</p>}
 
+      {loading && <p style={{ textAlign: "center" }}>🔄 טוען מקומות נוספים...</p>}
     </div>
   );
 };

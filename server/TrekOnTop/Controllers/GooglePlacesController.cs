@@ -1,83 +1,56 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
-using System.Threading.Tasks;
+using Services.Interfaces;
 
-namespace TrekOnTop.Controllers 
+[Route("api/[controller]")]
+[ApiController]
+public class GooglePlacesController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class GooglePlacesController : ControllerBase
+    private readonly IGooglePlacesService _googlePlacesService;
+
+    public GooglePlacesController(IGooglePlacesService googlePlacesService)
     {
-        private readonly HttpClient _httpClient;
-        private readonly IConfiguration _configuration;
+        _googlePlacesService = googlePlacesService;
+    }
 
-        public GooglePlacesController(HttpClient httpClient, IConfiguration configuration)
+    [HttpGet("nearby")]
+    public async Task<IActionResult> GetNearbyPlaces([FromQuery] double lat, [FromQuery] double lng)
+    {
+        try
         {
-            _httpClient = httpClient;
-            _configuration = configuration;
+            var content = await _googlePlacesService.GetNearbyPlacesAsync(lat, lng);
+            return Content(content, "application/json");
         }
-
-        [HttpGet("nearby")]
-        public async Task<IActionResult> GetNearbyPlaces([FromQuery] double lat, [FromQuery] double lng)
+        catch
         {
-            var apiKey = _configuration["GoogleMaps:ApiKey"];
-            if (string.IsNullOrEmpty(apiKey))
-                return BadRequest("Missing Google API Key");
-
-            var url = $"https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={lat},{lng}&radius=50&key={apiKey}";
-
-            try
-            {
-                var response = await _httpClient.GetAsync(url);
-                var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
-            }
-            catch
-            {
-                return StatusCode(500, "Failed to fetch data from Google Places API");
-            }
+            return StatusCode(500, "Failed to fetch data from Google Places API");
         }
+    }
 
-        [HttpGet("details")]
-        public async Task<IActionResult> GetPlaceDetails([FromQuery] string placeId)
+    [HttpGet("details")]
+    public async Task<IActionResult> GetPlaceDetails([FromQuery] string placeId)
+    {
+        try
         {
-            var apiKey = _configuration["GoogleMaps:ApiKey"];
-            if (string.IsNullOrEmpty(apiKey))
-                return BadRequest("Missing Google API Key");
-
-            var url = $"https://maps.googleapis.com/maps/api/place/details/json?place_id={placeId}&fields=name,formatted_address,photos,website&key={apiKey}";
-
-            try
-            {
-                var response = await _httpClient.GetAsync(url);
-                var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
-            }
-            catch
-            {
-                return StatusCode(500, "Failed to fetch place details from Google API");
-            }
+            var content = await _googlePlacesService.GetPlaceDetailsAsync(placeId);
+            return Content(content, "application/json");
         }
-        [HttpGet("searchByText")]
-        public async Task<IActionResult> SearchByText([FromQuery] string query)
+        catch
         {
-            var apiKey = _configuration["GoogleMaps:ApiKey"];
-            if (string.IsNullOrEmpty(apiKey))
-                return BadRequest("Missing Google API Key");
-
-            var url = $"https://maps.googleapis.com/maps/api/place/textsearch/json?query={Uri.EscapeDataString(query)}&key={apiKey}";
-
-            try
-            {
-                var response = await _httpClient.GetAsync(url);
-                var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
-            }
-            catch
-            {
-                return StatusCode(500, "Failed to fetch data from Google Text Search API");
-            }
+            return StatusCode(500, "Failed to fetch place details from Google API");
         }
+    }
 
+    [HttpGet("searchByText")]
+    public async Task<IActionResult> SearchByText([FromQuery] string query)
+    {
+        try
+        {
+            var content = await _googlePlacesService.SearchByTextAsync(query);
+            return Content(content, "application/json");
+        }
+        catch
+        {
+            return StatusCode(500, "Failed to fetch data from Google Text Search API");
+        }
     }
 }

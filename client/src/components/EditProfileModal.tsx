@@ -24,15 +24,15 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ user, onClose }) =>
   };
 
   const handleSubmit = async () => {
+    console.log("updating user...");
     const form = new FormData();
-    form.append("UserId", user.id.toString());
     form.append("Name", name);
     form.append("Email", user.email); // אימייל נשאר קבוע
     form.append("Password", password || ""); // אם לא שונה – שלח ריק
     if (file) form.append("File", file);
-
+    console.log("form:", form);
     try {
-      await axios.put(`/api/user/${user.id}`, form, {
+      await axios.put(`/api/User/${user.id}`, form, {
         headers: {
           Authorization: `Bearer ${user.token}`,
         },

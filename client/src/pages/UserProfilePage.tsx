@@ -27,8 +27,8 @@ const UserProfilePage = () => {
         if (!user || !user.user) return;
         const fetchProfileImage = () => {
             setProfileImageUrl(`https://localhost:7083/api/User/getimage/${user.user?.id}`);
-          };
-          
+        };
+
 
         const fetchRecommendations = async () => {
             try {
@@ -105,7 +105,7 @@ const UserProfilePage = () => {
     return (
         <div className="wallet-style">
             {/* <div className="user-menu-wrapper"> */}
-                {/* <UserMenu
+            {/* <UserMenu
                     profileImage={profileImageUrl}
                     name={user.user.name}
                     email={user.user.email}
@@ -161,8 +161,8 @@ const UserProfilePage = () => {
                                 {images.length > 0 && (
                                     <div className="slider">
                                         <img className="slider-image" src={`https://localhost:7083/api/Image/getimage/${images[currentIndex].imageId}`} alt="המלצה" />
-                                        <button className="arrow left" onClick={() => setCurrentImageIndex(prev => ({ ...prev, [rec.recoId]: (currentIndex - 1 + images.length) % images.length }))}>‹</button>
-                                        <button className="arrow right" onClick={() => setCurrentImageIndex(prev => ({ ...prev, [rec.recoId]: (currentIndex + 1) % images.length }))}>›</button>
+                                        <img className="arrow left" src="/images/left-arrow.png" onClick={() => setCurrentImageIndex(prev => ({ ...prev, [rec.recoId]: (currentIndex - 1 + images.length) % images.length }))} />
+                                        <img className="arrow right" src="/images/right-arrow.png" onClick={() => setCurrentImageIndex(prev => ({ ...prev, [rec.recoId]: (currentIndex + 1) % images.length }))} />
                                     </div>
                                 )}
                                 <div className="likes">

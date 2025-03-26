@@ -19,7 +19,7 @@ import ContactPage from "./pages/contact";
 import PrivacyPolicy from "./pages/privacy";
 import AdminCategoriesPage from "./pages/AdminCategoriesPage";
 import AdminEmailEditor from "./pages/AdminEmailEditor";
-
+import PlacePage from "./pages/PlacePage";
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -64,6 +64,8 @@ const App: React.FC = () => {
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/admin/categories" element={<AdminCategoriesPage />} />
                 <Route path="/admin/change-admin-email" element={<AdminEmailEditor />} />
+                <Route path="/place/:id" element={<PlacePage />} />
+
               </Routes>
             </div>
             <Footer />

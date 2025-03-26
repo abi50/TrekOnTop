@@ -144,22 +144,17 @@ const RecommendationModal: React.FC<Props> = ({
             <li key={reco.recoId} style={{ marginBottom: 10 }}>
               <h4>{reco.title}</h4>
               <p>{reco.description}</p>
-              {recommendations.map((reco) => (
-                <li key={reco.recoId} style={{ marginBottom: 10 }}>
-                  <h4>{reco.title}</h4>
-                  <p>{reco.description}</p>
-                  <small>👍 {reco.likes} | 👎 {reco.dislikes}</small>
-                  {token && (
-                    <div style={{ marginTop: 5 }}>
-                      <button onClick={() => handleLike(reco.recoId)}>👍</button>
-                      <button onClick={() => handleDislike(reco.recoId)}>👎</button>
-                    </div>
-                  )}
-                </li>
-              ))}
+              <small>👍 {reco.likes} | 👎 {reco.dislikes}</small>
+              {token && (
+                <div style={{ marginTop: 5 }}>
+                  <button onClick={() => handleLike(reco.recoId)}>👍</button>
+                  <button onClick={() => handleDislike(reco.recoId)}>👎</button>
+                </div>
+              )}
             </li>
           ))}
         </ul>
+
       </div>
     </div>
   );
