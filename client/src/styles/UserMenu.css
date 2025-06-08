@@ -1,0 +1,63 @@
+.user-menu-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .profile-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid #ccc;
+  }
+  
+  .user-dropdown {
+    position: absolute;
+    top: 56px;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    padding: 1rem;
+    width: 220px;
+    z-index: 1000;
+  }
+  
+  .user-dropdown .user-info {
+    margin-bottom: 0.8rem;
+    text-align: right;
+  }
+  
+  .user-dropdown .user-info strong {
+    display: block;
+    font-size: 1rem;
+  }
+  
+  .user-dropdown .user-info span {
+    font-size: 0.85rem;
+    color: #555;
+  }
+  
+  .user-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 0.5rem;
+    text-align: right;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  
+  .user-dropdown button:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .user-dropdown hr {
+    margin: 0.6rem 0;
+    border: none;
+    border-top: 1px solid #ddd;
+  }
+  

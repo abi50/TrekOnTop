@@ -2,121 +2,118 @@
 using Common.Dtos;
 using Repository.Entity;
 using Repository.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
+using Services.Interfaces;
 
-namespace Services.Services
+public class RecommendationLikeService : IRecommendationLikeService
 {
-    public class RecommendationLikeService
+    private readonly IRepository<RecommendationLike> _likeRepository;
+    private readonly IRepository<Recommendation> _recommendationRepository;
+    private readonly IMapper _mapper;
+
+    public RecommendationLikeService(
+        IRepository<RecommendationLike> likeRepository,
+        IRepository<Recommendation> recommendationRepository,
+        IMapper mapper)
     {
-        private readonly IRepository<RecommendationLike> _likeRepository;
-        private readonly IRepository<Recommendation> _recommendationRepository;
-        private readonly IMapper _mapper;
+        _likeRepository = likeRepository;
+        _recommendationRepository = recommendationRepository;
+        _mapper = mapper;
+    }
 
-        public RecommendationLikeService(
-            IRepository<RecommendationLike> likeRepository,
-            IRepository<Recommendation> recommendationRepository,
-            IMapper mapper)
+    public RecommendationLikeDto ToggleLike(int userId, int recoId)
+    {
+        var recommendation = _recommendationRepository.Get(recoId);
+        if (recommendation == null) return null;
+
+        var existingLike = _likeRepository.GetAll()
+            .FirstOrDefault(l => l.UserId == userId && l.RecoId == recoId);
+
+        if (existingLike != null)
         {
-            _likeRepository = likeRepository;
-            _recommendationRepository = recommendationRepository;
-            _mapper = mapper;
-        }
-
-        public RecommendationLikeDto ToggleLike(int userId, int recoId)
-        {
-            var recommendation = _recommendationRepository.Get(recoId);
-            if (recommendation == null) return null;
-
-            var existingLike = _likeRepository.GetAll()
-                .FirstOrDefault(like => like.UserId == userId && like.RecoId == recoId);
-
-            if (existingLike != null)
+            if (existingLike.IsLike)
             {
-                if (existingLike.IsLike)
-                {
-                    // אם המשתמש כבר לחץ לייק - מחק את הלייק בלבד
-                    _likeRepository.DeleteItem(existingLike.Id);
-                    recommendation.Likes--;
-                    _recommendationRepository.UpdateItem(recoId, recommendation);
-                    return null;
-                }
-                else
-                {
-                    // אם המשתמש שם דיסלייק והחליט להפוך אותו ללייק
-                    existingLike.IsLike = true;
-                    _likeRepository.UpdateItem(existingLike.Id, existingLike);
-                    recommendation.Likes++;
-                    recommendation.Dislikes--;
-                }
+                _likeRepository.DeleteItem(existingLike.Id);
+                recommendation.Likes--;
+                _recommendationRepository.UpdateItem(recoId, recommendation);
+                return null;
             }
             else
             {
-                // אם המשתמש לא לחץ כלום - הוסף לייק
-                _likeRepository.AddItem(new RecommendationLike
-                {
-                    UserId = userId,
-                    RecoId = recoId,
-                    IsLike = true
-                });
+                existingLike.IsLike = true;
+                _likeRepository.UpdateItem(existingLike.Id, existingLike);
                 recommendation.Likes++;
+                recommendation.Dislikes--;
             }
-
-            _recommendationRepository.UpdateItem(recoId, recommendation);
-            return _mapper.Map<RecommendationLikeDto>(existingLike ?? new RecommendationLike
+        }
+        else
+        {
+            _likeRepository.AddItem(new RecommendationLike
             {
                 UserId = userId,
                 RecoId = recoId,
                 IsLike = true
             });
+            recommendation.Likes++;
         }
 
-        public RecommendationLikeDto ToggleDislike(int userId, int recoId)
+        _recommendationRepository.UpdateItem(recoId, recommendation);
+        return _mapper.Map<RecommendationLikeDto>(existingLike ?? new RecommendationLike
         {
-            var recommendation = _recommendationRepository.Get(recoId);
-            if (recommendation == null) return null;
+            UserId = userId,
+            RecoId = recoId,
+            IsLike = true
+        });
+    }
 
-            var existingLike = _likeRepository.GetAll()
-                .FirstOrDefault(like => like.UserId == userId && like.RecoId == recoId);
+    public RecommendationLikeDto ToggleDislike(int userId, int recoId)
+    {
+        var recommendation = _recommendationRepository.Get(recoId);
+        if (recommendation == null) return null;
 
-            if (existingLike != null)
+        var existingLike = _likeRepository.GetAll()
+            .FirstOrDefault(l => l.UserId == userId && l.RecoId == recoId);
+
+        if (existingLike != null)
+        {
+            if (!existingLike.IsLike)
             {
-                if (!existingLike.IsLike)
-                {
-                    // אם המשתמש כבר לחץ דיסלייק - מחק את הדיסלייק בלבד
-                    _likeRepository.DeleteItem(existingLike.Id);
-                    recommendation.Dislikes--;
-                    _recommendationRepository.UpdateItem(recoId, recommendation);
-                    return null;
-                }
-                else
-                {
-                    // אם המשתמש שם לייק והחליט להפוך אותו לדיסלייק
-                    existingLike.IsLike = false;
-                    _likeRepository.UpdateItem(existingLike.Id, existingLike);
-                    recommendation.Dislikes++;
-                    recommendation.Likes--;
-                }
+                _likeRepository.DeleteItem(existingLike.Id);
+                recommendation.Dislikes--;
+                _recommendationRepository.UpdateItem(recoId, recommendation);
+                return null;
             }
             else
             {
-                // אם המשתמש לא לחץ כלום - הוסף דיסלייק
-                _likeRepository.AddItem(new RecommendationLike
-                {
-                    UserId = userId,
-                    RecoId = recoId,
-                    IsLike = false
-                });
+                existingLike.IsLike = false;
+                _likeRepository.UpdateItem(existingLike.Id, existingLike);
                 recommendation.Dislikes++;
+                recommendation.Likes--;
             }
-
-            _recommendationRepository.UpdateItem(recoId, recommendation);
-            return _mapper.Map<RecommendationLikeDto>(existingLike ?? new RecommendationLike
+        }
+        else
+        {
+            _likeRepository.AddItem(new RecommendationLike
             {
                 UserId = userId,
                 RecoId = recoId,
                 IsLike = false
             });
+            recommendation.Dislikes++;
         }
+
+        _recommendationRepository.UpdateItem(recoId, recommendation);
+        return _mapper.Map<RecommendationLikeDto>(existingLike ?? new RecommendationLike
+        {
+            UserId = userId,
+            RecoId = recoId,
+            IsLike = false
+        });
     }
+    public string GetStatus(int userId, int recoId)
+    {
+        var like = _likeRepository.GetAll().FirstOrDefault(l => l.UserId == userId && l.RecoId == recoId);
+        if (like == null) return "none";
+        return like.IsLike ? "liked" : "disliked";
+    }
+
 }

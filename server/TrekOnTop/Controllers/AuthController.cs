@@ -1,7 +1,9 @@
 ﻿using Common.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Services.Interfaces;
+using Services.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -9,106 +11,77 @@ using System.Text;
 
 namespace TrekOnTop.Controllers
 {
-    [Route("api/auth")]
     [ApiController]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly IService<UserDto> _service;
-        private readonly IConfiguration _config;
+        private readonly IAuthService _authService;
 
-        public AuthController(IService<UserDto> service, IConfiguration config)
+        public AuthController(IAuthService authService)
         {
-            _service = service;
-            _config = config;
+            _authService = authService;
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromQuery] string email, [FromQuery] string password)
+        public IActionResult Login([FromForm] LoginDto loginData)
         {
-            var user = _service.GetAll().FirstOrDefault(x => x.Email == email);
-            if (user == null || !VerifyPassword(password, user.Password))
-            {
-                return BadRequest("Invalid email or password");
-            }
-
-            var token = GenerateToken(user);
-            return Ok(token);
+            var token = _authService.Login(loginData);
+            return token == null
+                ? Unauthorized("Invalid email or password")
+                : Ok(token);
         }
 
         [HttpPost("register")]
-        public IActionResult Register([FromForm] RegisterDto newUser)
+        public IActionResult Register([FromForm] UserDto newUser)
         {
             if (string.IsNullOrEmpty(newUser.Email) || string.IsNullOrEmpty(newUser.Password))
                 return BadRequest("Email and Password are required.");
 
-            if (!IsValidEmail(newUser.Email))
+            if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(newUser.Email))
                 return BadRequest("Invalid email format.");
 
-            if (_service.GetAll().Any(x => x.Email == newUser.Email))
-                return BadRequest("User with this email already exists.");
-
-            byte[]? profilePic = null;
-            if (newUser.File != null && newUser.File.Length > 0)
+            try
             {
-                using (var memoryStream = new MemoryStream())
-                {
-                    newUser.File.CopyTo(memoryStream);
-                    profilePic = memoryStream.ToArray();
-                }
+                var token = _authService.Register(newUser);
+                return Ok(token);
             }
-
-            var userDto = new UserDto
+            catch (Exception ex)
             {
-                Name = newUser.Name,
-                Email = newUser.Email,
-                Password = HashPassword(newUser.Password),
-                ProfilPic = profilePic
-            };
-
-            var addedUser = _service.AddItem(userDto);
-            var token = GenerateToken(addedUser);
-
-            return Ok( token );
+                return BadRequest(ex.Message);
+            }
         }
 
-
-
-        private string GenerateToken(UserDto user)
+        [Authorize]
+        [HttpGet("check")]
+        public IActionResult CheckUser()
         {
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
-            };
-
-            var token = new JwtSecurityToken(
-                _config["Jwt:Issuer"],
-                _config["Jwt:Audience"],
-                claims,
-                expires: DateTime.Now.AddMinutes(45),
-                signingCredentials: credentials
-            );
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var user = _authService.GetUserById(userId);
+            return user == null
+                ? NotFound("User not found.")
+                : Ok(new { user.UserId, user.Name, user.Email });
         }
 
-        private bool IsValidEmail(string email)
+        [Authorize]
+        [HttpPost("verify-password")]
+        public IActionResult VerifyPassword([FromBody] string password)
         {
-            return new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(email);
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var result = _authService.VerifyPassword(userId, password);
+            return result ? Ok("Password is correct") : Unauthorized("Incorrect password");
         }
 
-        private string HashPassword(string password)
+        [Authorize]
+        [HttpPut("change-password")]
+        public IActionResult ChangePassword([FromBody] string newPassword)
         {
-            using var sha256 = SHA256.Create();
-            byte[] hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(hashedBytes);
-        }
+            if (string.IsNullOrEmpty(newPassword))
+                return BadRequest("New password is required.");
 
-        private bool VerifyPassword(string enteredPassword, string storedHashedPassword)
-        {
-            return HashPassword(enteredPassword) == storedHashedPassword;
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            _authService.ChangePassword(userId, newPassword);
+
+            return Ok("Password updated successfully.");
         }
     }
 }

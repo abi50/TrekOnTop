@@ -13,21 +13,19 @@ namespace Services.Services
     {
         public MyMapper()
         {
-
-            // Map בין User ל-UserDto
-            CreateMap<User, UserDto>()
-                 .ForMember(dest => dest.ProfilPic, src => src
-                 .MapFrom(s => ConvertToByte(Path.Combine(Environment.CurrentDirectory, "images", s.ProfilPic))));
-
-            CreateMap<UserDto, User>()
-                .ForMember(dest => dest.ProfilPic, src => src
-                .MapFrom(s => s.File.FileName));
-
+            // Image
             CreateMap<Image, ImageDto>()
-                .ForMember(dest => dest.Url, src => src.MapFrom(s => s.Url)); // מיפוי ישיר ל-string
+                .ForMember(dest => dest.Url, src => src.MapFrom(s => s.Url));
 
             CreateMap<ImageDto, Image>()
-                .ForMember(dest => dest.Url, src => src.MapFrom(s => s.File != null ? s.File.FileName : s.Url)); // מיפוי מ-FileName אם קיים
+                .ForMember(dest => dest.Url, src => src.MapFrom(s => s.Url));
+
+            // User
+            CreateMap<User, UserDto>()
+                .ForMember(dest => dest.ProfilPic, opt => opt.MapFrom(src => src.ProfilPic));
+
+            CreateMap<UserDto, User>()
+                .ForMember(dest => dest.ProfilPic, opt => opt.MapFrom(src => src.ProfilPic));
 
             //    CreateMap<Recommendation, RecommendationDto>()
             //.ForMember(dest => dest.Images, src => src.MapFrom(s => s.Images.Select(image => ConvertToByte(Environment.CurrentDirectory + "/Images/" + image)).ToArray()));

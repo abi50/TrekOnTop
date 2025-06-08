@@ -2,52 +2,75 @@
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 
-namespace TrekOnTop.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class CityController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CityController: ControllerBase
+    private readonly ICityService _cityService;
+
+    public CityController(ICityService cityService)
     {
+        _cityService = cityService;
+    }
 
-        private readonly IService<CityDto> _cityService;
-        public CityController(IService<CityDto> cityService)
+    [HttpGet]
+    public IActionResult Get() => Ok(_cityService.GetAll());
+
+    [HttpGet("{id}")]
+    public IActionResult Get(int id)
+    {
+        try
         {
-            _cityService = cityService;
+            return Ok(_cityService.GetById(id));
         }
-
-        // GET: api/<UserController>
-        [HttpGet]
-        public List<CityDto> Get()
+        catch (Exception ex)
         {
-            return _cityService.GetAll();
+            return NotFound(ex.Message);
         }
+    }
 
-        // GET api/<UserController>/5
-        [HttpGet("{id}")]
-        public CityDto Get(int id)
-        {
-            return _cityService.GetById(id);
-        }
+    [HttpPost]
+    public IActionResult Post([FromForm] CityDto value)
+    {
+        if (string.IsNullOrEmpty(value.Name))
+            return BadRequest("City name is required.");
 
-        // POST api/<UserController>
-        [HttpPost]
-        public void Post([FromForm] CityDto value)
-        {
-            _cityService.AddItem(value);
-        }
+        var newCity = _cityService.AddItem(value);
+        return CreatedAtAction(nameof(Post), new { id = newCity.Id }, newCity);
+    }
 
-        // PUT api/<UserController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromForm] CityDto value)
+    [HttpPut("{id}")]
+    public IActionResult Put(int id, [FromForm] CityDto value)
+    {
+        try
         {
             _cityService.Update(id, value);
+            return Ok("City updated.");
         }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
 
-        // DELETE api/<UserController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        try
         {
             _cityService.Delete(id);
+            return Ok("City deleted.");
         }
+        catch (Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    [HttpGet("byName")]
+    public IActionResult GetCityByName([FromQuery] string cityName)
+    {
+        var city = _cityService.GetByName(cityName);
+        return city == null ? NotFound("City not found.") : Ok(city);
     }
 }

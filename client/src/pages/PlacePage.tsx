@@ -1,83 +1,125 @@
-import "../styles/PlacePage.css";  
-import React, { useState, useEffect } from "react";
+// pages/PlacePage.tsx
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
-import { Place, Country } from '../types';
+import { RecommendationDto, PlaceDto } from "../types";
+import RecommendationCard from "../components/RecommendationCard";
+import { GoogleMap, Marker, LoadScript, InfoWindow } from "@react-google-maps/api";
 
+import "../styles/PlacePage.css";
 
-const PlacesPage: React.FC = () => {
-    const [places, setPlaces] = useState<Place[]>([]);
-    const [filteredPlaces, setFilteredPlaces] = useState<Place[]>([]);
-    const [countries, setCountries] = useState<Country[]>([]);
-    const [selectedCountry, setSelectedCountry] = useState("");
+interface GooglePlaceDetails {
+    address: string;
+    photos: string[];
+    rating?: number;
+    totalRatings?: number;
+}
+
+const mapContainerStyle = {
+    width: "100%",
+    height: "300px",
+    borderRadius: "12px",
+    marginTop: "40px",
+};
+
+const PlacePage: React.FC = () => {
+    const token = localStorage.getItem("token") || ""; 
+    const { id } = useParams();
+    const [place, setPlace] = useState<PlaceDto | null>(null);
+    const [recommendations, setRecommendations] = useState<RecommendationDto[]>([]);
+    const [googleDetails, setGoogleDetails] = useState<GooglePlaceDetails | null>(null);
 
     useEffect(() => {
-        fetchPlaces();
-        fetchCountries();
-    }, []);
+        if (!id) return;
 
-    const fetchPlaces = async (countryId: string = "") => {
-        try {
-            const url = countryId 
-                ? `https://localhost:7083/api/Place/byCountry/${countryId}` 
-                : `https://localhost:7083/api/Place`;
-    
-            const response = await axios.get(url);
-            console.log("Places data:", response.data); // בדיקה בקונסול
-            setPlaces(response.data);
-            setFilteredPlaces(response.data);
-        } catch (error) {
-            console.error("Failed to fetch places:", error);
-        }
-    };
-    
+        axios.get(`https://localhost:7083/api/Place/${id}`)
+            .then(res => setPlace(res.data))
+            .catch(console.error);
+    }, [id]);
 
-    const fetchCountries = async () => {
-        try {
-            const response = await axios.get("https://localhost:7083/api/Country");
-            console.log("Countries data:", response.data); // בדיקה בקונסול
-            setCountries(response.data); // שמירת רשימת המדינות כולל ID
-        } catch (error) {
-            console.error("Failed to fetch countries:", error);
-        }
-    };
-    
+    useEffect(() => {
+        if (!place) return;
 
-    const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedCountryName = e.target.value;
-        setSelectedCountry(selectedCountryName);
-    
-        // מציאת ה-ID של המדינה שנבחרה
-        const selectedCountry = countries.find(c => c.countryName === selectedCountryName);
-        const countryId = selectedCountry ? selectedCountry.countryId.toString() : "";
-    
-        fetchPlaces(countryId); // קריאה לשרת עם ID של המדינה
-    };
-    
+        axios.get(`https://localhost:7083/api/Recommendation/byPlace/${place.placeId}`)
+            .then(res => setRecommendations(res.data))
+            .catch(console.error);
+
+        axios.get("https://localhost:7083/api/GooglePlaces/searchByText", {
+            params: { query: `${place.placeName}, ${place.latitude}, ${place.longitude}` }
+        }).then(res => {
+            const googlePlace = res.data.results[0];
+            if (!googlePlace) return;
+
+            axios.get("https://localhost:7083/api/GooglePlaces/details", {
+                params: { placeId: googlePlace.place_id }
+            }).then(detailsRes => {
+                const d = detailsRes.data.result;
+                const photos = d.photos?.map((p: any) =>
+                    `https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photoreference=${p.photo_reference}&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+                ) || [];
+
+                setGoogleDetails({
+                    address: d.formatted_address,
+                    photos,
+                    rating: d.rating,
+                    totalRatings: d.user_ratings_total
+                });
+            });
+        }).catch(console.error);
+
+    }, [place]);
+
+    if (!place || !googleDetails) return <div className="place-loader">טוען...</div>;
+    console.log("🔍 מיקום:", place.latitude, place.longitude);
 
     return (
-        <div className="container">
-            <h1>Discover Beautiful Places</h1>
-            <select onChange={handleFilterChange} className="dropdown">
-                <option value="">All Countries</option>
-                {countries.map((country) => (
-                    <option key={country.countryId} value={country.countryName}>{country.countryName}</option>
-                ))}
-            </select>
+        <div className="place-page-wrapper">
+            <h1 className="place-name">{place.placeName}</h1>
+            <p className="place-address">📍 {googleDetails.address}</p>
+            {googleDetails.rating && (
+                <p className="place-rating">⭐ {googleDetails.rating} ({googleDetails.totalRatings} ביקורות)</p>
+            )}
 
-            <div className="grid-container">
-                {filteredPlaces.map((place) => (
-                    <div key={place.placeId} className="place-card">
-                        {/* הצגת תמונה – אם אין, נטען תמונת ברירת מחדל */}
-                        <img src={place.imageUrl || "https://via.placeholder.com/300"} alt={place.placeName} />
-                        <h2>{place.placeName}</h2>
-                        {/* הצגת מדינה – אם אין, יציג 'Unknown Country' */}
-                        <p>{place.country || "Unknown Country"}</p>
-                        <p>Latitude: {place.latitude}, Longitude: {place.longitude}</p>
-                    </div>
-                ))}
+            {googleDetails.photos.length > 0 && (
+                <div className="photo-grid">
+                    {googleDetails.photos.map((url, idx) => (
+                        <img key={idx} src={url} alt={`מקום ${idx + 1}`} />
+                    ))}
+                </div>
+            )}
+
+            <div className="recommendation-list">
+                {recommendations.length > 0 ? (
+                    recommendations.map((rec) => (
+                        <RecommendationCard
+                        key={rec.recoId}
+                        recoId={rec.recoId}
+                        title={rec.title}
+                        description={rec.description}
+                        likes={rec.likes}
+                        dislikes={rec.dislikes}
+                        token={token!}
+                      />
+                    ))
+                ) : (
+                    <p className="no-recommendations">אין עדיין המלצות על המקום הזה.</p>
+                )}
             </div>
+            <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || ""}>
+                <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    center={{ lat: place.latitude, lng: place.longitude }}
+                    zoom={13}
+                >
+                    <Marker position={{ lat: place.latitude, lng: place.longitude }}>
+                        {/* <InfoWindow position={{ lat: Number(place.latitude), lng: Number(place.longitude) }}>
+                            <div>{place.placeName}</div>
+                        </InfoWindow> */}
+                    </Marker>
+                </GoogleMap>
+            </LoadScript>
         </div>
     );
 };
 
-export default PlacesPage;
+export default PlacePage;

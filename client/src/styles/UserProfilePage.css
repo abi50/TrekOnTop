@@ -1,0 +1,220 @@
+.wallet-style {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 30px;
+  background-color: #f9fafb;
+  border-radius: 20px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+  font-family: "Rubik", sans-serif;
+}
+
+.user-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.user-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-pic {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+}
+
+.user-details .info-line {
+  font-size: 16px;
+  color: #444;
+  margin: 6px 0;
+}
+
+.user-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.user-actions button {
+  background: transparent;
+  border: 1px solid #ccc;
+  color: #333;
+  padding: 8px 16px;
+  font-size: 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-actions button:hover {
+  background: #f0f0f0;
+}
+
+.recommendations-title {
+  font-size: 1.6rem;
+  margin: 30px 0 20px;
+  text-align: center;
+  color: #222;
+}
+
+.recommendation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.recommendation-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recommendation-card h4 {
+  font-size: 18px;
+  color: #111;
+}
+
+.recommendation-card p {
+  color: #555;
+  margin: 0;
+}
+
+.place-name {
+  font-style: italic;
+  color: #777;
+}
+
+.likes {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
+.recommendation-card button {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid #ccc;
+  color: #333;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recommendation-card button:hover {
+  background-color: #f3f4f6;
+}
+
+.slider {
+  position: relative;
+  width: 100%;
+  max-width: 350px;
+  margin-top: 10px;
+}
+
+.slider-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.8);
+  border: 1px solid #ccc;
+  font-size: 20px;
+  color: #333;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.arrow:hover {
+  background: #ffffff;
+}
+
+.arrow.left {
+  left: 8px;
+}
+
+.arrow.right {
+  right: 8px;
+}
+
+.no-recommendations {
+  text-align: center;
+  color: #777;
+  margin-top: 30px;
+  font-size: 16px;
+}
+@media screen and (max-width: 768px) {
+  .wallet-style {
+    padding: 20px;
+    margin: 20px auto;
+  }
+
+  .user-main {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .user-details .info-line {
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .user-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .recommendation-card {
+    padding: 16px;
+  }
+
+  .slider-image {
+    height: 160px;
+  }
+
+  .arrow {
+    font-size: 18px;
+    padding: 3px 8px;
+  }
+
+  .recommendation-card h4 {
+    font-size: 17px;
+  }
+
+  .recommendation-card p {
+    font-size: 14px;
+  }
+
+  .user-actions button,
+  .recommendation-card button {
+    width: 100%;
+    font-size: 15px;
+  }
+}

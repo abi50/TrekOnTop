@@ -1,0 +1,151 @@
+body {
+  font-family: 'Rubik', Arial, sans-serif;
+  background: #f9fbfd;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+  color: #333;
+}
+
+.home-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+}
+
+.navbar {
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 10px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-search {
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  width: 250px;
+  outline: none;
+}
+
+.nav-links a {
+  color: #555;
+  text-decoration: none;
+  margin: 0 10px;
+  font-weight: 500;
+}
+
+
+
+.user-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.footer {
+  background: #fff;
+  padding: 15px;
+  text-align: center;
+  margin-top: 30px;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.03);
+}
+
+.footer-links a {
+  margin: 0 10px;
+  color: #555;
+  text-decoration: none;
+}
+/* Home.css */
+
+.homepage-wrapper {
+  direction: rtl;
+  font-family: 'Rubik', sans-serif;
+  background-color: #f8f9fa;
+  padding-bottom: 50px;
+}
+
+
+
+.hero-text {
+  background-color: rgba(0, 0, 0, 0.4);
+  padding: 20px 40px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.hero-text h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.hero-text p {
+  font-size: 1.2rem;
+}
+
+.home-section {
+  margin: 40px auto;
+  max-width: 1200px;
+  padding: 0 20px;
+}
+
+.home-section h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #333;
+  border-right: 5px solid #4ea1d3;
+  padding-right: 10px;
+}
+
+.places-grid,
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.country-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.country-tag {
+  background-color: #4ea1d3;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  cursor: default;
+}
+
+.country-tag:hover {
+  background-color: #368ab8;
+}
+
+.loading-msg {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  margin-top: 20px;
+}
+
+.hero-banner {
+  background-image: url('../../public/images/img129695.jpg');
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+  border-bottom: 5px solid #f0f0f0;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+
+}

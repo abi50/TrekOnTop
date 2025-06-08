@@ -1,0 +1,28 @@
+.places-page-container {
+    padding: 30px;
+    background-color: #fafcff;
+    min-height: 100vh;
+  }
+  
+  .places-page-title {
+    font-size: 2rem;
+    text-align: center;
+    color: #334e68;
+    margin-bottom: 20px;
+  }
+  
+  .places-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding-top: 20px;
+  }
+  
+  .loading,
+  .no-results {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #667085;
+    margin-top: 30px;
+  }
+  

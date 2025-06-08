@@ -1,62 +1,47 @@
-body {
-    background: linear-gradient(to right, #4facfe, #00f2fe);
-    font-family: Arial, sans-serif;
-    color: white;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-}
-
-.container {
-    padding: 20px;
-}
-
-h1 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-}
-
-.dropdown {
-    background: white;
-    color: black;
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
-}
-
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px;
-    max-width: 1200px;
+.place-page-wrapper {
+    padding: 40px 20px;
+    max-width: 1000px;
     margin: auto;
-}
+    font-family: 'Rubik', sans-serif;
+    color: #222;
+  }
 
-.place-card {
-    background: white;
-    color: black;
-    border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    text-align: left;
-}
-
-.place-card img {
+  
+  .place-name {
+    font-size: 36px;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  
+  .place-address,
+  .place-rating {
+    font-size: 18px;
+    margin: 4px 0;
+    color: #555;
+  }
+  
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 25px 0;
+  }
+  
+  .photo-grid img {
     width: 100%;
-    height: 200px;
+    height: 150px;
     object-fit: cover;
-    border-radius: 5px;
-}
-
-.place-card h2 {
-    font-size: 1.5rem;
-    margin: 10px 0;
-}
-
-.place-card p {
-    font-size: 1rem;
-    color: gray;
-}
+    border: none;
+    border-radius: 0;
+  }
+  
+  .recommendation-list {
+    margin-top: 40px;
+  }
+  
+  .no-recommendations {
+    text-align: center;
+    color: #888;
+    font-size: 16px;
+    margin-top: 20px;
+  }
