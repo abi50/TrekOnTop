@@ -9,19 +9,36 @@ interface Props {
 }
 
 const DeleteAccountModal: React.FC<Props> = ({ userId, token, onClose }) => {
+token = localStorage.getItem("token") || "";
   const handleDelete = async () => {
+    if (!token) {
+      alert("אתה לא מחובר. אנא התחבר ונסה שוב.");
+      return;
+    }
+
     try {
-      await axios.delete(`https://localhost:7083/api/user/${userId}`, {
+      const response = await axios.delete(`https://localhost:7083/api/user/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      alert("החשבון נמחק בהצלחה.");
-      localStorage.removeItem("token");
-      window.location.href = "/";
-    } catch (e) {
-      alert("שגיאה במחיקת החשבון.");
-      console.error(e);
+
+      if (response.status === 200 || response.status === 204) {
+        alert("החשבון נמחק בהצלחה.");
+        localStorage.removeItem("token");
+        window.location.href = "/";
+      } else {
+        alert(`מחיקת החשבון נכשלה. קוד שגיאה: ${response.status}`);
+      }
+
+    } catch (error: any) {
+      if (axios.isAxiosError(error) && error.response) {
+        alert(`שגיאה במחיקת החשבון: ${error.response.status} - ${error.response.data?.message || error.message}`);
+        console.error("Server responded with:", error.response.data);
+      } else {
+        alert("שגיאה לא צפויה במחיקת החשבון.");
+        console.error("Unexpected error:", error);
+      }
     }
   };
 

@@ -120,17 +120,33 @@ const UserProfilePage = () => {
                 <div className="user-main">
                     <img src={profileImageUrl} className="profile-pic" alt="Profile" />
                     <div className="user-details">
-                        <div className="info-line"><span>👤</span> {user.user?.name}</div>
-                        <div className="info-line"><span>📧</span> {user.user?.email}</div>
-                        <div className="info-line"><span>🔒</span> הסיסמה שלך שמורה בצורה מאובטחת</div>
+                        <div className="info-line"><span>                        
+                            <img src="/icons/profile.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+                        </span> {user.user?.name}</div>
+                        <div className="info-line"><span>                        
+                            <img src="/icons/email.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+                        </span> {user.user?.email}</div>
+                        <div className="info-line"><span>                        
+                            <img src="/icons/key.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+                        </span> הסיסמה שלך שמורה בצורה מאובטחת</div>
                     </div>
                 </div>
 
                 <div className="user-actions">
-                    <button onClick={handleEditClick}>✏ עריכת פרופיל</button>
-                    <button onClick={() => setShowChangePassword(true)}>🔑 שינוי סיסמה</button>
-                    <button onClick={() => setShowExportData(true)}>📁 ייצוא נתונים</button>
-                    <button onClick={() => setShowDeleteAccount(true)}>🗑 מחיקת חשבון</button>
+                    <button onClick={handleEditClick}>        
+                        <img src="/icons/edit-profile.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+                    עריכת פרופיל</button>
+                    <button onClick={() => setShowChangePassword(true)}>
+                    <img src="/icons/password1.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+
+                         שינוי סיסמה</button>
+                    <button onClick={() => setShowExportData(true)}>
+                    <img src="/icons/download.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+
+                        ייצוא נתונים</button>
+                    <button onClick={() => setShowDeleteAccount(true)}>                    
+                        <img src="/icons/trash.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+                    מחיקת חשבון</button>
                 </div>
             </div>
 

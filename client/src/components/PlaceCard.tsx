@@ -6,6 +6,7 @@ import { RecommendationDto, PlaceDto, ImageDto, UserDto } from "../types";
 import { useNavigate } from "react-router-dom";
 import "../styles/PlaceCard.css";
 import RecommendationModal from "./RecommendationModal";
+import ReactDOM from "react-dom";
 
 interface PlaceCardProps {
   place: PlaceDto;
@@ -143,7 +144,8 @@ return (
   >
     <div className="place-card-overlay">
       <h2 className="place-name">{googleDetails?.name || place.placeName}</h2>
-      <p className="place-location">📍 {googleDetails?.address}</p>
+      <p className="place-location">        <img src="/icons/location.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+      {googleDetails?.address}</p>
       {googleDetails?.rating && (
         <p className="place-rating">⭐ {googleDetails.rating} ({googleDetails.user_ratings_total} ביקורות)</p>
       )}
@@ -161,7 +163,7 @@ return (
       }}
     />
     <img
-      src="/icons/eye.gif"
+      src="/icons/view.png"
       alt="הצג המלצות"
       className="footer-icon"
       onClick={(e) => {
@@ -171,7 +173,8 @@ return (
     />
   </div>
 
-  {showModal && (
+  {showModal &&
+  ReactDOM.createPortal(
     <RecommendationModal
       placeId={place.placeId}
       placeName={place.placeName}
@@ -180,8 +183,11 @@ return (
       categoryId={place.categoryId}
       recommendations={recommendations}
       onClose={() => setShowModal(false)}
-    />
-  )}
+    />,
+    document.body
+  )
+}
+
 </div>
 );
 };

@@ -98,4 +98,15 @@ public class RecommendationController : ControllerBase
         var recommendations = _recommendationService.GetByPlaceId(placeId);
         return recommendations.Any() ? Ok(recommendations) : NotFound("No recommendations found.");
     }
+    [HttpGet("random")]
+    public IActionResult GetRandomRecommendations(int count = 4)
+    {
+        var randomRecommendations = _recommendationService.GetAll()
+            .OrderBy(r => Guid.NewGuid())
+            .Take(count)
+            .ToList();
+
+        return Ok(randomRecommendations);
+    }
+
 }

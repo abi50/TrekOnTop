@@ -15,10 +15,10 @@ const ExportUserDataModal: React.FC<Props> = ({ token, onClose }) => {
       try {
         const [recs, user] = await Promise.all([
           axios.get("https://localhost:7083/api/Recommendation", {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }),
           axios.get("https://localhost:7083/api/auth/check", {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }),
         ]);
 

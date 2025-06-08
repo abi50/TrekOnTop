@@ -1,118 +1,85 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import PlaceCard from "../components/PlaceCard";
-import { PlaceDto, CategoryDto, CountryDto } from "../types";
 import "../styles/Home.css";
+import PlaceCard from "../components/PlaceCard";
+import RecommendationCard from "../components/RecommendationCard";
+import { PlaceDto, RecommendationDto, CountryDto } from "../types";
 
 const Home: React.FC = () => {
-  const [places, setPlaces] = useState<PlaceDto[]>([]);
-  const [categories, setCategories] = useState<CategoryDto[]>([]);
-  const [countries, setCountries] = useState<CountryDto[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [selectedCountry, setSelectedCountry] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
-
+  const [topPlaces, setTopPlaces] = useState<PlaceDto[]>([]);
+  const [topCountries, setTopCountries] = useState<CountryDto[]>([]);
+  const [recentRecommendations, setRecentRecommendations] = useState<RecommendationDto[]>([]);
+  const token = localStorage.getItem("token") || "";
   useEffect(() => {
-    axios.get("https://localhost:7083/api/Place/paged", {
-      params: { page: 1, limit: 6 }
-    })
-      .then(response => {
-        setPlaces(response.data);
-        setPage(2);
-      })
-      .catch(error => console.error("Error fetching places:", error));
+    // מקומות עם הכי הרבה המלצות
+    console.log("start fetching");
+    axios.get("https://localhost:7083/api/Place/topWithMostRecommendations")
+      .then(res => setTopPlaces(res.data))
+      .catch(console.error);
 
-    axios.get("https://localhost:7083/api/Category")
-      .then(response => setCategories(response.data))
-      .catch(error => console.error("Error fetching categories:", error));
+    // מדינות עם הכי הרבה מקומות
+    axios.get("https://localhost:7083/api/Country/mostPopular")
+      .then(res => setTopCountries(res.data))
+      .catch(console.error);
 
-    axios.get("https://localhost:7083/api/Country")
-      .then(response => setCountries(response.data))
-      .catch(error => console.error("Error fetching countries:", error));
+    // המלצות אקראיות
+    axios.get("https://localhost:7083/api/Recommendation/random?count=4")
+      .then(res => setRecentRecommendations(res.data))
+      .catch(console.error);
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 &&
-        !loading && hasMore
-      ) {
-        fetchMorePlaces();
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [loading, hasMore, page]);
-
-  const fetchMorePlaces = async () => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-    try {
-      const res = await axios.get("https://localhost:7083/api/Place/paged", {
-        params: { page, limit: 6 }
-      });
-      const newPlaces = res.data;
-
-      if (newPlaces.length === 0) {
-        setHasMore(false);
-      } else {
-        setPlaces(prev => [...prev, ...newPlaces]);
-        setPage(prev => prev + 1);
-      }
-    } catch (err) {
-      console.error("Error fetching more places:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredPlaces = places.filter(place => {
-    const matchesCategory = selectedCategory ? place.categoryId === selectedCategory : true;
-    const matchesCountry = selectedCountry ? place.cityId === selectedCountry : true;
-    return matchesCategory && matchesCountry;
-  });
-
   return (
-    <div className="home-container">
-      <h1>🌍 מקומות מומלצים</h1>
-
-      <div className="filters-container">
-        <div className="filter">
-          <h3>סנן לפי קטגוריה</h3>
-          <select onChange={(e) => setSelectedCategory(Number(e.target.value))} defaultValue="">
-            <option value="">בחר קטגוריה</option>
-            {categories.map(category => (
-              <option key={category.categoryId} value={category.categoryId}>{category.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter">
-          <h3>סנן לפי מדינה</h3>
-          <select onChange={(e) => setSelectedCountry(Number(e.target.value))} defaultValue="">
-            <option value="">בחר מדינה</option>
-            {countries.map(country => (
-              <option key={country.countryId} value={country.countryId}>{country.countryName}</option>
-            ))}
-          </select>
+    <div className="homepage-wrapper">
+      <div className="hero-banner">
+        <div className="hero-text">
+          <h1>הטיול הבא שלך מתחיל כאן</h1>
+          <p>המלצות אמיתיות ממטיילים על מקומות מרהיבים בעולם</p>
         </div>
       </div>
 
-      <div className="places-container">
-        {filteredPlaces.length > 0 ? (
-          filteredPlaces.map(place => (
-            <PlaceCard key={place.placeId} place={place} />
-          ))
-        ) : (
-          <p>לא נמצאו מקומות מתאימים.</p>
-        )}
+      <div className="home-section">
       </div>
 
-      {loading && <p style={{ textAlign: "center" }}>🔄 טוען מקומות נוספים...</p>}
+      <div className="home-section">
+        <h2>
+          <img src="/icons/push-pin.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+          מקומות פופולריים
+        </h2>        <div className="places-grid">
+          {topPlaces.map(place => <PlaceCard key={place.placeId} place={place} />)}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <h2>
+        <img src="/icons/europe.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+        
+           מדינות בולטות</h2>
+        <div className="country-tags">
+          {topCountries.map(country => (
+            <div key={country.countryId} className="country-tag">
+              {country.countryName}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="home-section">
+        <h2>
+        <img src="/icons/edit.png" alt="popular places" style={{ width: 24, verticalAlign: 'middle', marginLeft: 5 }} />
+
+           המלצות אחרונות</h2>
+        <div className="recommendations-grid">
+          {recentRecommendations.map(rec => (
+
+            <RecommendationCard recoId={rec.recoId}
+              title={rec.title}
+              description={rec.description}
+              likes={rec.likes}
+              dislikes={rec.dislikes}
+              token={token} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

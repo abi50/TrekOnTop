@@ -1,217 +1,194 @@
-// 📁 NearbyPlaces.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, useLoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import axios from "axios";
-import FilterPanel from "../components/FilterPanel";
 import RecommendationModal from "../components/RecommendationModal";
-import SmartSearchBar from "../components/SmartSearchBar";
-import { PlaceDto, RecommendationDto } from "../types";
+import FilterCompact from "../components/FilterCompact";
+import { ImageDto, PlaceDto, RecommendationDto } from "../types";
 import "../styles/NearbyPlaces.css";
 
 const mapContainerStyle = {
-    width: "100%",
-    height: "600px",
-    borderRadius: "15px",
-    boxShadow: "0 4px 8px rgba(0,0,0,0.3)"
+  width: "100%",
+  height: "600px",
+  borderRadius: "15px",
+  boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
 };
 
-const defaultCenter = {
-    lat: 32.0853,
-    lng: 34.7818
-};
+const defaultCenter = { lat: 32.0853, lng: 34.7818 };
+
+const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"];
 
 const NearbyPlaces: React.FC = () => {
-    const [places, setPlaces] = useState<PlaceDto[]>([]);
-    const [recommendations, setRecommendations] = useState<Record<number, RecommendationDto[]>>({});
-    const [selectedPlace, setSelectedPlace] = useState<PlaceDto | null>(null);
-    const [hoveredPlace, setHoveredPlace] = useState<PlaceDto | null>(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [mapCenter, setMapCenter] = useState(defaultCenter);
-    const mapRef = useRef<google.maps.Map | null>(null);
-    
-    
-    useEffect(() => {
-        setMapCenter(defaultCenter);
-        fetchPlaces();
-    }, []);
-    const fetchPlaces = async (filters: any = {}) => {
-        try {
-            const allPlaces = await axios.get<PlaceDto[]>("https://localhost:7083/api/Place");
-            let filtered = allPlaces.data;
+  const [places, setPlaces] = useState<PlaceDto[]>([]);
+  const [filteredPlaces, setFilteredPlaces] = useState<PlaceDto[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceDto | null>(null);
+  const [hoveredPlace, setHoveredPlace] = useState<PlaceDto | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [cities, setCities] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendationDto[]>([]);
+  const [images, setImages] = useState<ImageDto[]>([]);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const isMountedRef = useRef(true);
 
-            if (filters.categoryId) filtered = filtered.filter(p => p.categoryId === filters.categoryId);
-            if (filters.countryId) {
-                const cityRes = await axios.get("https://localhost:7083/api/City");
-                const cities = cityRes.data.filter((c: any) => c.countryId === filters.countryId).map((c: any) => c.id);
-                filtered = filtered.filter((p) => cities.includes(p.cityId));
-            }
-            if (filters.cityId) filtered = filtered.filter((p) => p.cityId === filters.cityId);
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "",
+    libraries,
+  });
 
-            if (filters.lat && filters.lng && filters.radiusKm) {
-                filtered = filtered.filter(p => {
-                    const dist = getDistanceFromLatLng(filters.lat, filters.lng, p.latitude, p.longitude);
-                    return dist <= filters.radiusKm;
-                });
-                setMapCenter({ lat: filters.lat, lng: filters.lng });
-            }
-
-            if (filtered.length > 0) {
-                const avgLat = filtered.reduce((sum, p) => sum + p.latitude, 0) / filtered.length;
-                const avgLng = filtered.reduce((sum, p) => sum + p.longitude, 0) / filtered.length;
-                setMapCenter({ lat: avgLat, lng: avgLng });
-            }
-
-            setPlaces(filtered);
-
-            const recs: Record<number, RecommendationDto[]> = {};
-            await Promise.all(
-                filtered.map(async (place) => {
-                    const recRes = await axios.get(`https://localhost:7083/api/Recommendation/byPlace/${place.placeId}`);
-                    recs[place.placeId] = recRes.data;
-                })
-            );
-            setRecommendations(recs);
-        } catch (err) {
-            console.error("Error loading places or recommendations:", err);
-        }
+  useEffect(() => {
+    isMountedRef.current = true;
+    fetchInitialData();
+    return () => {
+      isMountedRef.current = false;
     };
+  }, []);
 
-    const handleSmartSearch = async (parsed: { category: string, distanceKm: number, cityName: string }) => {
-        console.log("🔍 קלט מהחיפוש החכם:", parsed);
-      
-        try {
-           
-          const cityRes = await axios.get("https://localhost:7083/api/City");
-          const match = cityRes.data.find((c: any) =>
-            c.name.toLowerCase().includes(parsed.cityName.toLowerCase())
-          );
-      
-          if (!match) {
-            
-            console.warn("⚠️ עיר לא נמצאה במסד הנתונים:", parsed.cityName);
-            alert(`לא נמצאה עיר בשם "${parsed.cityName}". נסה לכתוב שם אחר.`);
-            return;
-          }
-          let lat = match.latitude;
-          let lng = match.longitude;
-      
-          if (!lat || !lng) {
-            console.log("📡 מבצע Geocoding דרך גוגל לעיר:", match.name);
-            
-        }
-      
-          const categoryRes = await axios.get("https://localhost:7083/api/Category");
-          const cat = categoryRes.data.find((c: any) =>
-            c.name.toLowerCase().includes(parsed.category.toLowerCase())
-          );
-      
-          if (!cat) {
-            console.warn("⚠️ קטגוריה לא נמצאה במסד הנתונים:", parsed.category);
-            alert(`לא נמצאה קטגוריה בשם "${parsed.category}". נסה לכתוב קטגוריה שונה.`);
-            return;
-          }
-      
-          const filters = {
-            lat: match.latitude,
-            lng: match.longitude,
-            radiusKm: parsed.distanceKm,
-            categoryId: cat.categoryId
-          };
-      
-          console.log("📍 מבצע חיפוש עם סינון:", filters);
-          fetchPlaces(filters);
-      
-        } catch (err) {
-          console.error("❌ שגיאה בביצוע חיפוש חכם:", err);
-          alert("אירעה שגיאה בעת ניסיון לבצע חיפוש חכם. נסה שוב.");
-        }
-      };
-      
+  useEffect(() => {
+    if (!selectedPlace?.placeId) return;
 
-    const getDistanceFromLatLng = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-        const toRad = (x: number) => x * Math.PI / 180;
-        const R = 6371;
-        const dLat = toRad(lat2 - lat1);
-        const dLng = toRad(lng2 - lng1);
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    };
+    axios
+      .get(`https://localhost:7083/api/Recommendation/byPlace/${selectedPlace.placeId}`)
+      .then((res) => isMountedRef.current && setRecommendations(res.data))
+      .catch(console.error);
 
-    const handleMyLocation = () => {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            console.log("Found location:", pos.coords);
-            const { latitude, longitude } = pos.coords;
-            setMapCenter({ lat: latitude, lng: longitude });
-            fetchPlaces({ lat: latitude, lng: longitude });
-            console.log("Map ref:", mapRef.current);
-        }, (err) => {
-            console.error("שגיאה במציאת מיקום:", err);
-        });
-    };
+    axios
+      .get("https://localhost:7083/api/Image")
+      .then((res) => {
+        const allImages = res.data as ImageDto[];
+        const relevant = allImages.filter((img) =>
+          recommendations.some((rec) => rec.recoId === img.recommendationId)
+        );
+        if (isMountedRef.current) setImages(relevant);
+      })
+      .catch(console.error);
+  }, [selectedPlace?.placeId]);
 
-    return (
-        <div className="nearby-places-container">
-            <h2 className="title">🌍 חיפוש מקומות במפה</h2>
-            <button onClick={handleMyLocation} className="mylocation-btn">📍 מצא אותי</button>
+  const fetchInitialData = async () => {
+    try {
+      const [placesRes, citiesRes] = await Promise.all([
+        axios.get("https://localhost:7083/api/Place"),
+        axios.get("https://localhost:7083/api/City"),
+      ]);
 
-            <div className="filters-container">
-                <div className="smart-search-section">
-                    <SmartSearchBar onSearchParsed={handleSmartSearch} />
-                </div>
-                <div className="filter-panel-section">
-                    <FilterPanel onFilterChange={fetchPlaces} />
-                </div>
+      if (!isMountedRef.current) return;
+
+      setPlaces(placesRes.data);
+      setFilteredPlaces(placesRes.data);
+      setCities(citiesRes.data);
+      console.log("טעינת מקומות ראשונית:", placesRes.data);
+      centerMap(placesRes.data);
+    } catch (err) {
+      console.error("שגיאה בטעינת נתונים ראשונית:", err);
+    }
+  };
+
+  const handleFiltersChange = (filters: any) => {
+    console.log("Applying filters:", filters);
+    let filtered = [...places];
+
+    if (filters.categoryId)
+      filtered = filtered.filter((p) => p.categoryId === filters.categoryId);
+
+    if (filters.countryId) {
+      const filteredCities = cities
+        .filter((c) => c.countryId === filters.countryId)
+        .map((c) => c.id);
+      filtered = filtered.filter((p) => filteredCities.includes(p.cityId));
+    }
+
+    if (filters.cityId)
+      filtered = filtered.filter((p) => p.cityId === filters.cityId);
+
+    if (filters.radius && filters.lat && filters.lng) {
+      filtered = filtered.filter((p) => {
+        const dist = getDistanceFromLatLng(filters.lat, filters.lng, p.latitude, p.longitude);
+        return dist <= filters.radius;
+      });
+    }
+
+    setFilteredPlaces(filtered);
+    console.log("מקומות לאחר סינון:", filtered);
+    centerMap(filtered);
+  };
+
+  const centerMap = (placesToCenter: PlaceDto[]) => {
+    if (placesToCenter.length > 0) {
+      const avgLat = placesToCenter.reduce((sum, p) => sum + p.latitude, 0) / placesToCenter.length;
+      const avgLng = placesToCenter.reduce((sum, p) => sum + p.longitude, 0) / placesToCenter.length;
+
+      setMapCenter({ lat: avgLat, lng: avgLng });
+      console.log("מרכז מפה חדש:", { lat: avgLat, lng: avgLng });
+    } else {
+      setMapCenter(defaultCenter);
+      console.log("אין מקומות לסינון, מרכז מפה לברירת מחדל");
+    }
+  };
+
+  const getDistanceFromLatLng = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const toRad = (x: number) => (x * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  if (!isLoaded) return <div>טוען מפה...</div>;
+
+  return (
+    <div className="nearby-places-container">
+      <h2 className="title">🌍 חיפוש מקומות במפה</h2>
+
+      <FilterCompact onApplyFilters={handleFiltersChange} />
+
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={mapCenter}
+        zoom={8}
+        onLoad={(map) => {
+          mapRef.current = map;
+        }}
+      >
+        {filteredPlaces.map((place) => (
+          <Marker
+            key={place.placeId}
+            position={{ lat: place.latitude, lng: place.longitude }}
+            onClick={() => {
+              setSelectedPlace(place);
+              setModalOpen(true);
+            }}
+            onMouseOver={() => setHoveredPlace(place)}
+            onMouseOut={() => setHoveredPlace(null)}
+          />
+        ))}
+
+        {hoveredPlace && (
+          <InfoWindow
+            position={{ lat: hoveredPlace.latitude, lng: hoveredPlace.longitude }}
+            onCloseClick={() => setHoveredPlace(null)}
+          >
+            <div>
+              <strong>{hoveredPlace.placeName}</strong>
             </div>
+          </InfoWindow>
+        )}
+      </GoogleMap>
 
-
-
-            <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || ""}>
-                <GoogleMap
-                    mapContainerStyle={mapContainerStyle}
-                    center={mapCenter}
-                    zoom={5}
-                    onLoad={(map) => { mapRef.current = map; }}
-                >
-                    {places.map((place) => (
-                        <Marker
-                            key={place.placeId}
-                            position={{ lat: place.latitude, lng: place.longitude }}
-                            onClick={() => {
-                                setSelectedPlace(place);
-                                setModalOpen(true);
-                            }}
-                            onMouseOver={() => setHoveredPlace(place)}
-                            onMouseOut={() => setHoveredPlace(null)}
-                        />
-                    ))}
-
-                    {hoveredPlace && (
-                        <InfoWindow
-                            position={{ lat: hoveredPlace.latitude, lng: hoveredPlace.longitude }}
-                            onCloseClick={() => setHoveredPlace(null)}
-                        >
-                            <div>
-                                <strong>{hoveredPlace.placeName}</strong>
-                            </div>
-                        </InfoWindow>
-                    )}
-                </GoogleMap>
-            </LoadScript>
-
-            {modalOpen && selectedPlace && (
-                <RecommendationModal
-                    placeId={selectedPlace.placeId}
-                    placeName={selectedPlace.placeName}
-                    latitude={selectedPlace.latitude}
-                    longitude={selectedPlace.longitude}
-                    categoryId={selectedPlace.categoryId} // ✅ הוספת השדה החסר
-                    recommendations={recommendations[selectedPlace.placeId] || []}
-                    onClose={() => setModalOpen(false)}
-                />
-            )}
-        </div>
-    );
+      {modalOpen && selectedPlace && (
+        <RecommendationModal
+          placeId={selectedPlace.placeId}
+          placeName={selectedPlace.placeName}
+          latitude={selectedPlace.latitude}
+          longitude={selectedPlace.longitude}
+          categoryId={selectedPlace.categoryId}
+          recommendations={recommendations}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
+    </div>
+  );
 };
 
 export default NearbyPlaces;

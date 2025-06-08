@@ -1,0 +1,47 @@
+.filter-compact {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: fit-content;
+    margin: 0 auto;
+  }
+  
+  .filter-compact select,
+  .filter-compact input {
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 2px solid #e0e7ff;
+    background-color: #f9fafb;
+    font-size: 0.9rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    width: 150px;
+  }
+  
+  .filter-compact select:hover,
+  .filter-compact input:hover,
+  .filter-compact select:focus,
+  .filter-compact input:focus {
+    border-color: #a5b4fc;
+    box-shadow: 0 0 5px rgba(99, 102, 241, 0.4);
+  }
+  
+  /* .filter-compact button {
+    padding: 8px 15px;
+    border-radius: 8px;
+    background: linear-gradient(145deg, #6d5dfc, #6558f5);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  } */
+  
+  /* .filter-compact button:hover {
+    background: linear-gradient(145deg, #5848e0, #4a3bd4);
+    transform: translateY(-2px);
+  } */
+
+  

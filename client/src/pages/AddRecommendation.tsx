@@ -101,8 +101,72 @@ const AddRecommendation = () => {
       navigate("/login");
       return;
     }
-
+  
     try {
+      let placeId;
+  
+      console.log("בדיקת קיום המקום");
+      try {
+        const placeRes = await axios.get(`https://localhost:7083/api/Place/checkIfPlaceExists`, {
+          params: { lat: form.latitude, lng: form.longitude },
+        });
+        placeId = placeRes.data.placeId;
+      } catch {
+        console.log("המקום לא קיים, ממשיכים לבדוק עיר");
+        let cityId;
+  
+        try {
+          const cityRes = await axios.get(`https://localhost:7083/api/City/byName`, {
+            params: { cityName: form.cityName },
+          });
+          cityId = cityRes.data.id;
+        } catch {
+          console.log("העיר לא קיימת, ממשיכים לבדוק מדינה");
+          let countryId;
+  
+          try {
+            const countryRes = await axios.get(`https://localhost:7083/api/Country/byName`, {
+              params: { countryCode: form.countryCode },
+            });
+            countryId = countryRes.data.countryId;
+          } catch {
+            console.log("המדינה לא קיימת, יוצרים מדינה חדשה");
+  
+            const countryForm = new FormData();
+            countryForm.append("CountryName", form.countryName);
+            countryForm.append("CountryCode", form.countryCode);
+  
+            const newCountryRes = await axios.post(`https://localhost:7083/api/Country`, countryForm, {
+              headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            countryId = newCountryRes.data.countryId;
+          }
+  
+          console.log("עכשיו יוצרים עיר חדשה");
+          const cityForm = new FormData();
+          cityForm.append("Name", form.cityName);
+          cityForm.append("CountryId", countryId.toString());
+  
+          const newCityRes = await axios.post(`https://localhost:7083/api/City`, cityForm, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          cityId = newCityRes.data.id;
+        }
+  
+        console.log("עכשיו יוצרים מקום חדש");
+        const newPlaceRes = await axios.post(`https://localhost:7083/api/Place`, {
+          PlaceName: form.placeName,
+          Latitude: form.latitude,
+          Longitude: form.longitude,
+          CategoryId: form.categoryId,
+          CityId: cityId,
+        }, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        placeId = newPlaceRes.data.placeId;
+      }
+  
+      console.log("עכשיו יוצרים המלצה");
       const recommendationData = new FormData();
       recommendationData.append('RecoId', '0');
       recommendationData.append('UserId', user.user?.id?.toString() || '0');
@@ -110,39 +174,43 @@ const AddRecommendation = () => {
       recommendationData.append('Description', form.description);
       recommendationData.append('Likes', '0');
       recommendationData.append('Dislikes', '0');
-
-      // Add logic for placeId (simplified)
-      recommendationData.append('PlaceId', '1');
-
+      recommendationData.append('PlaceId', placeId.toString());
+  
       const recoResponse = await axios.post('https://localhost:7083/api/Recommendation', recommendationData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
       });
-
+  
       const recoId = recoResponse.data.recoId;
-      if(form.files.length >0) {
-      for (const file of form.files) {
-        const imgData = new FormData();
-        imgData.append("RecommendationId", recoId.toString());
-        imgData.append("File", file);
-        await axios.post('https://localhost:7083/api/Image', imgData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  
+      // שליחת תמונות
+      if (form.files.length > 0) {
+        for (const file of form.files) {
+          const imgData = new FormData();
+          imgData.append("RecommendationId", recoId.toString());
+          imgData.append("File", file);
+          await axios.post('https://localhost:7083/api/Image', imgData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        }
       }
-    }
+  
       dispatch(clearForm());
       localStorage.removeItem("recommendationDraft");
       localStorage.removeItem("selectedPlace");
       navigate(`/`);
+  
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
+      console.error("שגיאה בהעלאת ההמלצה:", error);
+      alert("אירעה שגיאה בעת שליחת ההמלצה. בדקי את הקונסול לפרטים.");
     }
   };
+  
 
   return (
     <div className="container">

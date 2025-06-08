@@ -24,17 +24,24 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ user, onClose }) =>
   };
 
   const handleSubmit = async () => {
-    console.log("updating user...");
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("ההתחברות פגה תוקף, יש להתחבר מחדש");
+      window.location.href = "/auth";
+      return;
+    }
+
     const form = new FormData();
     form.append("Name", name);
-    form.append("Email", user.email); // אימייל נשאר קבוע
-    form.append("Password", password || ""); // אם לא שונה – שלח ריק
+    form.append("Email", user.email);
+    form.append("Password", password || "");
     if (file) form.append("File", file);
-    console.log("form:", form);
+
     try {
-      await axios.put(`/api/User/${user.id}`, form, {
+      await axios.put(`https://localhost:7083/api/User/${user.id}`, form, {
         headers: {
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       alert("הפרטים עודכנו בהצלחה");
@@ -42,7 +49,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ user, onClose }) =>
       window.location.reload();
     } catch (e) {
       console.error("שגיאה בעדכון המשתמש:", e);
-      alert("שגיאה בעדכון המשתמש");
+      alert("שגיאה בעדכון המשתמש, בדוק את הפרטים ונסה שוב");
     }
   };
 
@@ -61,6 +68,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ user, onClose }) =>
         <label>סיסמה חדשה</label>
         <input
           type="password"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="השאר ריק אם לא לשנות"
         />
@@ -70,7 +78,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ user, onClose }) =>
 
         <div className="modal-actions">
           <button className="save" onClick={handleSubmit}>שמור</button>
-          <button className="cancle" onClick={onClose}>ביטול</button>
+          <button className="cancel" onClick={onClose}>ביטול</button>
         </div>
       </div>
     </div>

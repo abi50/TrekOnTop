@@ -7,6 +7,14 @@ appsettings.*.json
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 .env
+passwords.txt
+
+# סינון כל קובץ שכולל את המילים הבאות בשם הקובץ
+*secret*
+*token*
+*password*
+*apikey*
+*credentials*
 
 # dependencies
 /node_modules

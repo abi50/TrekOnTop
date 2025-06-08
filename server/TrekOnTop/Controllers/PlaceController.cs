@@ -8,11 +8,13 @@ public class PlaceController : ControllerBase
 {
     private readonly IPlaceService _placeService;
     private readonly IService<CityDto> _cityService;
+    private readonly IService<RecommendationDto> _recommendationService;
 
-    public PlaceController(IPlaceService placeService, IService<CityDto> cityService)
+    public PlaceController(IPlaceService placeService, IService<CityDto> cityService, IService<RecommendationDto> recommendationService)
     {
         _placeService = placeService;
         _cityService = cityService;
+        _recommendationService = recommendationService;
     }
 
     [HttpGet]
@@ -63,6 +65,31 @@ public class PlaceController : ControllerBase
     {
         return Ok(_placeService.GetNearbyPlaces(lat, lng, radius));
     }
+    [HttpGet("search")]
+    public IActionResult SmartSearch([FromQuery] double lat, [FromQuery] double lng, [FromQuery] double radius, [FromQuery] int categoryId)
+    {
+        var places = _placeService.GetAll()
+            .Where(p =>
+                p.CategoryId == categoryId &&
+                GetDistance(lat, lng, p.Latitude, p.Longitude) <= radius)
+            .ToList();
+
+        return Ok(places);
+    }
+    private double GetDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        var R = 6371; // רדיוס כדור הארץ בקילומטרים
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
+    }
+
 
     [HttpGet("checkIfPlaceExists")]
     public IActionResult CheckIfPlaceExists([FromQuery] double? lat, [FromQuery] double? lng)
@@ -83,4 +110,21 @@ public class PlaceController : ControllerBase
         var results = _placeService.GetByCountry(countryId, cities);
         return results.Any() ? Ok(results) : NotFound("No places found in this country.");
     }
+    [HttpGet("topWithMostRecommendations")]
+    public IActionResult GetTopPlaces()
+    {
+        var placesWithCount = _placeService.GetAll()
+            .Select(p => new
+            {
+                Place = p,
+                RecommendationCount = _recommendationService.GetAll().Count(r => r.PlaceId == p.PlaceId)
+            })
+            .OrderByDescending(p => p.RecommendationCount)
+            .Take(4)
+            .Select(p => p.Place)
+            .ToList();
+
+        return Ok(placesWithCount);
+    }
+
 }

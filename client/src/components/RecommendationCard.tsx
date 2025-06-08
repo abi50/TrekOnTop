@@ -3,13 +3,13 @@ import axios from 'axios';
 import '../styles/RecommendationCard.css';
 
 // אייקונים
-import likeBefore from '../assets/like_before.png';
-import likeLoading from '../assets/like_loading.gif';
-import likeAfter from '../assets/like_after.png';
+import likeBefore from '../assets/likes/like_empty.png';
+import likeLoading from '../assets/likes/like_loading.gif';
+import likeAfter from '../assets/likes/like_fill.png';
 
-import dislikeBefore from '../assets/dislike_before.png';
-import dislikeLoading from '../assets/dislike_loading.gif';
-import dislikeAfter from '../assets/dislike_after.png';
+import dislikeBefore from '../assets/likes/dislike_empty.png';
+import dislikeLoading from '../assets/likes/dislike_loading.gif';
+import dislikeAfter from '../assets/likes/dislike_fill.png';
 
 interface Props {
   recoId: number;
@@ -30,6 +30,9 @@ const RecommendationCard: React.FC<Props> = ({
 }) => {
   const [likeState, setLikeState] = useState<'none' | 'loading' | 'liked'>('none');
   const [dislikeState, setDislikeState] = useState<'none' | 'loading' | 'disliked'>('none');
+  const [user, setUser] = useState<{ userId: number; name: string } | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [images, setImages] = useState<any[]>([]);
 
   const [likeCount, setLikeCount] = useState(likes);
   const [dislikeCount, setDislikeCount] = useState(dislikes);
@@ -51,6 +54,33 @@ const RecommendationCard: React.FC<Props> = ({
     };
     fetchStatus();
   }, [recoId, token]);
+
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`https://localhost:7083/api/Recommendation/${recoId}/user`);
+        setUser(res.data);
+      } catch (err) {
+        console.error("שגיאה בטעינת היוזר של ההמלצה:", err);
+      }
+    };
+    axios.get(`https://localhost:7083/api/Recommendation/${recoId}/images`)
+    .then(res => setImages(res.data))
+    .catch(err => {
+      console.error("שגיאה בטעינת תמונות ההמלצה:", err);
+      setImages([]);
+    });
+    fetchUser();
+  }, [recoId]);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 4000);
+  
+    return () => clearInterval(interval);
+  }, [images]);
+  
   const handleLike = async () => {
     if (likeState === 'liked') return;
 
@@ -113,8 +143,30 @@ const RecommendationCard: React.FC<Props> = ({
 
   return (
     <div className="reco-card">
+      {user && (
+        <div className="reco-user-info">
+          <img
+            className="reco-user-pic"
+            src={`https://localhost:7083/api/User/getimage/${user.userId}`}
+            alt="user"
+          />
+          <span className="reco-user-name">{user.name}</span>
+        </div>
+      )}
+
       <h4>{title}</h4>
       <p>{description}</p>
+      {images.length > 0 && (
+        <div className="slider">
+          <img
+            className="slider-image"
+            src={`https://localhost:7083/api/Image/getimage/${images[currentImageIndex].imageId}`}
+            alt="recommendation"
+          />
+          <button className="arrow left" onClick={() => setCurrentImageIndex((currentImageIndex - 1 + images.length) % images.length)}>‹</button>
+          <button className="arrow right" onClick={() => setCurrentImageIndex((currentImageIndex + 1) % images.length)}>›</button>
+        </div>
+      )}
       <div className="like-dislike-row">
         <div onClick={handleLike} className="reco-button">
           <img src={getLikeIcon()} alt="Like" className="reco-icon" />

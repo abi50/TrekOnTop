@@ -36,7 +36,7 @@ public class UserController : ControllerBase
         _userService.AddItem(value);
         return Ok("User added successfully");
     }
-
+    [Authorize]
     [HttpPut("{id}")]
     public IActionResult Put(int id, [FromForm] UserDto value)
     {

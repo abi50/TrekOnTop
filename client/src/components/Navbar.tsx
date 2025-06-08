@@ -35,9 +35,9 @@ const Navbar: React.FC = () => {
 
       <div className="nav-links">
         <a href="/">בית</a>
-        <a href="/places">מקומות</a>
+        <a href="/placesPage">מקומות</a>
         <a href="/categories">קטגוריות</a>
-        <a href="/map">מקומות בקרבתי</a>
+        <a href="/map">מפה</a>
         <a href="/addReco">הוספת המלצה</a>  
         {isAdmin && <a href="/admin/categories">ניהול קטגוריות</a>}
 

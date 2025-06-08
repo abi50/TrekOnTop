@@ -41,7 +41,7 @@ const ChangePasswordModal: React.FC<Props> = ({ token, onClose }) => {
       // שינוי סיסמה
       await axios.put("https://localhost:7083/api/auth/change-password", JSON.stringify(newPassword), {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
           "Content-Type": "application/json"
         }
       });
